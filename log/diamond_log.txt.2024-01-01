@@ -1,0 +1,45 @@
+2024-01-03 15:38:04,509 - diamond.<module> - INFO - Starting logger.
+2024-01-03 15:38:05,160 - emod.start - INFO - Starting Job Manager.
+2024-01-03 15:38:05,160 - cron.run - INFO - Starting Cron Daemon.
+2024-01-03 15:39:50,460 - diamond.<module> - INFO - Starting logger.
+2024-01-03 15:39:51,029 - emod.start - INFO - Starting Job Manager.
+2024-01-03 15:39:51,029 - cron.run - INFO - Starting Cron Daemon.
+2024-01-03 15:40:48,400 - diamond.<module> - INFO - Starting logger.
+2024-01-03 15:40:48,970 - emod.start - INFO - Starting Job Manager.
+2024-01-03 15:40:48,970 - cron.run - INFO - Starting Cron Daemon.
+2024-01-03 15:53:24,380 - diamond.<module> - INFO - Starting logger.
+2024-01-03 15:53:24,960 - emod.start - INFO - Starting Job Manager.
+2024-01-03 15:53:24,960 - cron.run - INFO - Starting Cron Daemon.
+2024-01-03 16:17:21,009 - auto_focus_trace.focus - INFO - Focus: -18.67, -1.94, 74.75
+2024-01-03 16:17:27,369 - auto_focus_trace.focus - INFO - Focus: -18.47, -2.44, 74.55
+2024-01-03 16:18:16,890 - auto_focus_trace.focus - INFO - Focus: -18.47, -2.84, 74.30
+2024-01-03 16:22:50,019 - auto_focus_trace.focus - INFO - Focus: 51.42, 46.54, 71.03
+2024-01-03 16:22:57,970 - auto_focus_trace.focus - INFO - Focus: 51.32, 46.64, 71.23
+2024-01-03 16:23:08,160 - auto_focus_trace.focus - INFO - Focus: 51.72, 46.34, 71.48
+2024-01-03 16:23:18,480 - auto_focus_trace.focus - INFO - Focus: 52.12, 46.04, 71.68
+2024-01-03 16:23:30,660 - auto_focus_trace.focus - INFO - Focus: 52.52, 46.24, 71.58
+2024-01-03 16:23:36,890 - auto_focus_trace.focus - INFO - Focus: 52.92, 46.54, 71.58
+2024-01-03 16:24:31,359 - auto_focus_trace.focus - INFO - Focus: 52.52, 46.84, 71.78
+2024-01-03 16:44:00,880 - auto_focus_trace.focus - INFO - Focus: -81.05, -6.01, 64.47
+2024-01-03 16:44:24,349 - auto_focus_trace.focus - INFO - Focus: -85.05, -11.01, 64.47
+2024-01-03 16:44:31,650 - auto_focus_trace.focus - INFO - Focus: -86.05, -16.01, 64.47
+2024-01-03 16:44:37,390 - auto_focus_trace.focus - INFO - Focus: -82.05, -21.01, 64.47
+2024-01-03 17:16:00,109 - auto_focus_trace.focus - INFO - Focus: -64.76, -5.55, 63.42
+2024-01-03 17:16:25,210 - auto_focus_trace.focus - INFO - Focus: -60.76, -6.55, 63.92
+2024-01-03 17:17:31,950 - auto_focus_trace.focus - INFO - Focus: -81.80, -11.36, 63.92
+2024-01-03 17:17:39,640 - auto_focus_trace.focus - INFO - Focus: -82.80, -10.36, 63.92
+2024-01-03 17:17:52,720 - auto_focus_trace.focus - INFO - Focus: -50.58, 2.01, 63.92
+2024-01-03 17:17:58,700 - auto_focus_trace.focus - INFO - Focus: -48.58, 1.01, 63.92
+2024-01-03 17:18:27,549 - auto_focus_trace.focus - INFO - Focus: -50.58, 2.01, 63.92
+2024-01-03 17:19:10,039 - auto_focus_trace.focus - INFO - Focus: -50.58, 0.01, 63.92
+2024-01-03 17:19:58,750 - auto_focus_trace.focus - INFO - Focus: -51.58, 3.01, 63.42
+2024-01-03 17:22:13,150 - auto_focus_trace.focus - INFO - Focus: -52.58, 0.01, 63.42
+2024-01-03 17:22:55,700 - auto_focus_trace.focus - INFO - Focus: -50.43, 0.13, 63.42
+2024-01-03 17:23:01,619 - auto_focus_trace.focus - INFO - Focus: -52.43, -3.87, 63.42
+2024-01-03 17:23:08,240 - auto_focus_trace.focus - INFO - Focus: -52.43, -3.87, 63.42
+2024-01-03 17:23:17,680 - auto_focus_trace.focus - INFO - Focus: -92.40, 8.94, 63.42
+2024-01-03 17:23:26,710 - auto_focus_trace.focus - INFO - Focus: -81.95, -12.80, 63.42
+2024-01-03 17:23:39,779 - auto_focus_trace.focus - INFO - Focus: -56.73, -9.36, 63.42
+2024-01-03 17:24:33,720 - auto_focus_trace.focus - INFO - Focus: -60.73, -13.36, 63.42
+2024-01-03 17:24:42,190 - auto_focus_trace.focus - INFO - Focus: -56.73, -15.36, 63.42
+2024-01-03 17:26:38,910 - auto_focus_trace.focus - INFO - Focus: -57.73, -11.36, 62.92

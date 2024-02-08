@@ -1,0 +1,6 @@
+color_map = {
+	"y1": 0x1f77b4, "y2": 0xd62728, "y3": 0x2ca02c, "y4": 0xff7f0e, "y5": 0x9467bd,
+	"fit1": 0xaec7e8, "fit2": 0xff9896, "fit3": 0x98df8a, "fit4": 0xffbb78, "fit5": 0xc5b0d5,
+	"ref1": 0x8c564b, "ref2": 0xe377c2, "ref3": 0x7f7f7f, "ref4": 0xbcbd22, "ref5": 0x17becf,
+	"background": 0xffffff,
+}

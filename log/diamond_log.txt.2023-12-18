@@ -1,0 +1,180 @@
+2023-12-19 15:10:44,346 - diamond.<module> - INFO - Starting logger.
+2023-12-19 15:10:45,069 - emod.start - INFO - Starting Job Manager.
+2023-12-19 15:10:45,071 - cron.run - INFO - Starting Cron Daemon.
+2023-12-19 15:11:09,115 - diamond.<module> - INFO - Starting logger.
+2023-12-19 15:11:09,696 - emod.start - INFO - Starting Job Manager.
+2023-12-19 15:11:09,697 - cron.run - INFO - Starting Cron Daemon.
+2023-12-19 15:11:34,227 - diamond.<module> - INFO - Starting logger.
+2023-12-19 15:11:34,227 - diamond.<module> - INFO - Starting logger.
+2023-12-19 15:11:36,828 - diamond.<module> - INFO - Starting logger.
+2023-12-19 15:11:36,828 - diamond.<module> - INFO - Starting logger.
+2023-12-19 15:11:36,828 - diamond.<module> - INFO - Starting logger.
+2023-12-19 15:13:16,051 - diamond.<module> - INFO - Starting logger.
+2023-12-19 15:13:16,653 - emod.start - INFO - Starting Job Manager.
+2023-12-19 15:13:16,654 - cron.run - INFO - Starting Cron Daemon.
+2023-12-19 15:23:00,082 - diamond.<module> - INFO - Starting logger.
+2023-12-19 15:23:00,691 - emod.start - INFO - Starting Job Manager.
+2023-12-19 15:23:00,693 - cron.run - INFO - Starting Cron Daemon.
+2023-12-19 15:46:08,615 - diamond.<module> - INFO - Starting logger.
+2023-12-19 15:46:09,223 - emod.start - INFO - Starting Job Manager.
+2023-12-19 15:46:09,223 - cron.run - INFO - Starting Cron Daemon.
+2023-12-19 15:51:40,346 - diamond.<module> - INFO - Starting logger.
+2023-12-19 15:51:40,944 - emod.start - INFO - Starting Job Manager.
+2023-12-19 15:51:40,944 - cron.run - INFO - Starting Cron Daemon.
+2023-12-19 15:54:57,016 - diamond.<module> - INFO - Starting logger.
+2023-12-19 15:54:57,625 - emod.start - INFO - Starting Job Manager.
+2023-12-19 15:54:57,625 - cron.run - INFO - Starting Cron Daemon.
+2023-12-19 15:56:16,125 - diamond.<module> - INFO - Starting logger.
+2023-12-19 15:56:16,733 - emod.start - INFO - Starting Job Manager.
+2023-12-19 15:56:16,736 - cron.run - INFO - Starting Cron Daemon.
+2023-12-19 15:58:50,414 - diamond.<module> - INFO - Starting logger.
+2023-12-19 15:58:51,043 - emod.start - INFO - Starting Job Manager.
+2023-12-19 15:58:51,045 - cron.run - INFO - Starting Cron Daemon.
+2023-12-19 16:49:15,229 - diamond.<module> - INFO - Starting logger.
+2023-12-19 16:49:15,831 - emod.start - INFO - Starting Job Manager.
+2023-12-19 16:49:15,832 - cron.run - INFO - Starting Cron Daemon.
+2023-12-20 14:35:52,213 - diamond.<module> - INFO - Starting logger.
+2023-12-20 14:35:52,828 - emod.start - INFO - Starting Job Manager.
+2023-12-20 14:35:52,828 - cron.run - INFO - Starting Cron Daemon.
+2023-12-20 14:53:32,528 - emod.submit - INFO - The job <measurements.confocal.Confocal object at 0x06873E10> is already running or in the queue.
+2023-12-21 16:17:26,891 - diamond.<module> - INFO - Starting logger.
+2023-12-21 16:17:27,483 - emod.start - INFO - Starting Job Manager.
+2023-12-21 16:17:27,484 - cron.run - INFO - Starting Cron Daemon.
+2023-12-21 16:17:29,193 - trait_notifiers._log_exception - ERROR - Exception occurred in traits notification handler for object: <measurements.confocal.Confocal object at 0x06860E40>, trait: x, old value: 0.0, new value: -2.9702970297
+Traceback (most recent call last):
+  File "C:\Python27\lib\site-packages\traits\trait_notifiers.py", line 511, in rebind_call_0
+    self.dispatch( getattr( self.object(), self.name ) )
+  File "C:\Python27\lib\site-packages\traits\trait_notifiers.py", line 454, in dispatch
+    handler( *args )
+  File "D:\src\diamond\measurements\confocal.py", line 121, in _set_scanner_position
+    scanner.setPosition(self.x, self.y, self.z)
+  File "D:\src\diamond\hardware\nidaq.py", line 426, in setPosition
+    self.WriteAO(self.PosToVolt((x, y, z)), start=True)
+  File "D:\src\diamond\hardware\nidaq.py", line 272, in WriteAO
+    ctypes.byref(self._AONwritten), None) )
+  File "D:\src\diamond\hardware\nidaq.py", line 64, in CHK
+    raise RuntimeError('nidaq call failed with error %d: %s'%(err,repr(buf.value)))
+RuntimeError: nidaq call failed with error -50103: 'The specified resource is reserved. The operation could not be completed as specified.'
+2023-12-21 16:17:29,224 - trait_notifiers._log_exception - ERROR - Exception occurred in traits notification handler for object: <measurements.confocal.Confocal object at 0x06860E40>, trait: y, old value: 0.0, new value: -2.9702970297
+Traceback (most recent call last):
+  File "C:\Python27\lib\site-packages\traits\trait_notifiers.py", line 511, in rebind_call_0
+    self.dispatch( getattr( self.object(), self.name ) )
+  File "C:\Python27\lib\site-packages\traits\trait_notifiers.py", line 454, in dispatch
+    handler( *args )
+  File "D:\src\diamond\measurements\confocal.py", line 121, in _set_scanner_position
+    scanner.setPosition(self.x, self.y, self.z)
+  File "D:\src\diamond\hardware\nidaq.py", line 426, in setPosition
+    self.WriteAO(self.PosToVolt((x, y, z)), start=True)
+  File "D:\src\diamond\hardware\nidaq.py", line 272, in WriteAO
+    ctypes.byref(self._AONwritten), None) )
+  File "D:\src\diamond\hardware\nidaq.py", line 64, in CHK
+    raise RuntimeError('nidaq call failed with error %d: %s'%(err,repr(buf.value)))
+RuntimeError: nidaq call failed with error -50103: 'The specified resource is reserved. The operation could not be completed as specified.'
+2023-12-21 16:17:29,591 - trait_notifiers._log_exception - ERROR - Exception occurred in traits notification handler for object: <measurements.confocal.Confocal object at 0x06860E40>, trait: x, old value: -2.9702970297, new value: 37.9551020408
+Traceback (most recent call last):
+  File "C:\Python27\lib\site-packages\traits\trait_notifiers.py", line 511, in rebind_call_0
+    self.dispatch( getattr( self.object(), self.name ) )
+  File "C:\Python27\lib\site-packages\traits\trait_notifiers.py", line 454, in dispatch
+    handler( *args )
+  File "D:\src\diamond\measurements\confocal.py", line 121, in _set_scanner_position
+    scanner.setPosition(self.x, self.y, self.z)
+  File "D:\src\diamond\hardware\nidaq.py", line 426, in setPosition
+    self.WriteAO(self.PosToVolt((x, y, z)), start=True)
+  File "D:\src\diamond\hardware\nidaq.py", line 272, in WriteAO
+    ctypes.byref(self._AONwritten), None) )
+  File "D:\src\diamond\hardware\nidaq.py", line 64, in CHK
+    raise RuntimeError('nidaq call failed with error %d: %s'%(err,repr(buf.value)))
+RuntimeError: nidaq call failed with error -50103: 'The specified resource is reserved. The operation could not be completed as specified.'
+2023-12-21 16:17:29,595 - trait_notifiers._log_exception - ERROR - Exception occurred in traits notification handler for object: <measurements.confocal.Confocal object at 0x06860E40>, trait: y, old value: -2.9702970297, new value: -12.8193877551
+Traceback (most recent call last):
+  File "C:\Python27\lib\site-packages\traits\trait_notifiers.py", line 511, in rebind_call_0
+    self.dispatch( getattr( self.object(), self.name ) )
+  File "C:\Python27\lib\site-packages\traits\trait_notifiers.py", line 454, in dispatch
+    handler( *args )
+  File "D:\src\diamond\measurements\confocal.py", line 121, in _set_scanner_position
+    scanner.setPosition(self.x, self.y, self.z)
+  File "D:\src\diamond\hardware\nidaq.py", line 426, in setPosition
+    self.WriteAO(self.PosToVolt((x, y, z)), start=True)
+  File "D:\src\diamond\hardware\nidaq.py", line 272, in WriteAO
+    ctypes.byref(self._AONwritten), None) )
+  File "D:\src\diamond\hardware\nidaq.py", line 64, in CHK
+    raise RuntimeError('nidaq call failed with error %d: %s'%(err,repr(buf.value)))
+RuntimeError: nidaq call failed with error -50103: 'The specified resource is reserved. The operation could not be completed as specified.'
+2023-12-21 16:17:29,598 - trait_notifiers._log_exception - ERROR - Exception occurred in traits notification handler for object: <measurements.confocal.Confocal object at 0x06860E40>, trait: z, old value: 0, new value: 30.4
+Traceback (most recent call last):
+  File "C:\Python27\lib\site-packages\traits\trait_notifiers.py", line 511, in rebind_call_0
+    self.dispatch( getattr( self.object(), self.name ) )
+  File "C:\Python27\lib\site-packages\traits\trait_notifiers.py", line 454, in dispatch
+    handler( *args )
+  File "D:\src\diamond\measurements\confocal.py", line 121, in _set_scanner_position
+    scanner.setPosition(self.x, self.y, self.z)
+  File "D:\src\diamond\hardware\nidaq.py", line 426, in setPosition
+    self.WriteAO(self.PosToVolt((x, y, z)), start=True)
+  File "D:\src\diamond\hardware\nidaq.py", line 272, in WriteAO
+    ctypes.byref(self._AONwritten), None) )
+  File "D:\src\diamond\hardware\nidaq.py", line 64, in CHK
+    raise RuntimeError('nidaq call failed with error %d: %s'%(err,repr(buf.value)))
+RuntimeError: nidaq call failed with error -50103: 'The specified resource is reserved. The operation could not be completed as specified.'
+2023-12-21 17:11:18,384 - trait_notifiers._log_exception - ERROR - Exception occurred in traits notification handler for object: <measurements.confocal.Confocal object at 0x06860E40>, trait: x, old value: 37.9551020408, new value: 35.0
+Traceback (most recent call last):
+  File "C:\Python27\lib\site-packages\traits\trait_notifiers.py", line 511, in rebind_call_0
+    self.dispatch( getattr( self.object(), self.name ) )
+  File "C:\Python27\lib\site-packages\traits\trait_notifiers.py", line 454, in dispatch
+    handler( *args )
+  File "D:\src\diamond\measurements\confocal.py", line 121, in _set_scanner_position
+    scanner.setPosition(self.x, self.y, self.z)
+  File "D:\src\diamond\hardware\nidaq.py", line 426, in setPosition
+    self.WriteAO(self.PosToVolt((x, y, z)), start=True)
+  File "D:\src\diamond\hardware\nidaq.py", line 272, in WriteAO
+    ctypes.byref(self._AONwritten), None) )
+  File "D:\src\diamond\hardware\nidaq.py", line 64, in CHK
+    raise RuntimeError('nidaq call failed with error %d: %s'%(err,repr(buf.value)))
+RuntimeError: nidaq call failed with error -50103: 'The specified resource is reserved. The operation could not be completed as specified.'
+2023-12-21 17:11:18,388 - trait_notifiers._log_exception - ERROR - Exception occurred in traits notification handler for object: <measurements.confocal.Confocal object at 0x06860E40>, trait: y, old value: -12.8193877551, new value: -15.0
+Traceback (most recent call last):
+  File "C:\Python27\lib\site-packages\traits\trait_notifiers.py", line 511, in rebind_call_0
+    self.dispatch( getattr( self.object(), self.name ) )
+  File "C:\Python27\lib\site-packages\traits\trait_notifiers.py", line 454, in dispatch
+    handler( *args )
+  File "D:\src\diamond\measurements\confocal.py", line 121, in _set_scanner_position
+    scanner.setPosition(self.x, self.y, self.z)
+  File "D:\src\diamond\hardware\nidaq.py", line 426, in setPosition
+    self.WriteAO(self.PosToVolt((x, y, z)), start=True)
+  File "D:\src\diamond\hardware\nidaq.py", line 272, in WriteAO
+    ctypes.byref(self._AONwritten), None) )
+  File "D:\src\diamond\hardware\nidaq.py", line 64, in CHK
+    raise RuntimeError('nidaq call failed with error %d: %s'%(err,repr(buf.value)))
+RuntimeError: nidaq call failed with error -50103: 'The specified resource is reserved. The operation could not be completed as specified.'
+2023-12-21 17:23:24,164 - diamond.<module> - INFO - Starting logger.
+2023-12-21 17:23:24,747 - emod.start - INFO - Starting Job Manager.
+2023-12-21 17:23:24,749 - cron.run - INFO - Starting Cron Daemon.
+2023-12-21 17:27:51,437 - emod.submit - INFO - The job <measurements.auto_focus_trace.AutoFocusTrace object at 0x06C6F0F0> is already running or in the queue.
+2023-12-21 17:27:52,855 - auto_focus_trace.focus - INFO - Focus: -79.54, -6.22, 57.14
+2023-12-21 17:28:00,114 - emod.submit - INFO - The job <measurements.auto_focus_trace.AutoFocusTrace object at 0x06C6F0F0> is already running or in the queue.
+2023-12-21 17:28:03,434 - auto_focus_trace.focus - INFO - Focus: -79.74, -6.07, 56.93
+2023-12-21 17:28:22,085 - auto_focus_trace.focus - INFO - Focus: -79.74, -6.07, 56.72
+2023-12-21 17:29:08,056 - auto_focus_trace.focus - INFO - Focus: -79.99, -5.87, 56.51
+2023-12-21 18:15:56,641 - emod.submit - INFO - The job <measurements.auto_focus_trace.AutoFocusTrace object at 0x06C6F0F0> is already running or in the queue.
+2023-12-21 18:15:57,717 - emod.submit - INFO - The job <measurements.auto_focus_trace.AutoFocusTrace object at 0x06C6F0F0> is already running or in the queue.
+2023-12-21 18:15:57,891 - auto_focus_trace.focus - INFO - Focus: -76.69, -65.88, 73.19
+2023-12-21 18:16:00,520 - emod.submit - INFO - The job <measurements.auto_focus_trace.AutoFocusTrace object at 0x06C6F0F0> is already running or in the queue.
+2023-12-21 18:16:01,309 - emod.submit - INFO - The job <measurements.auto_focus_trace.AutoFocusTrace object at 0x06C6F0F0> is already running or in the queue.
+2023-12-21 18:16:02,062 - emod.submit - INFO - The job <measurements.auto_focus_trace.AutoFocusTrace object at 0x06C6F0F0> is already running or in the queue.
+2023-12-21 18:16:02,743 - emod.submit - INFO - The job <measurements.auto_focus_trace.AutoFocusTrace object at 0x06C6F0F0> is already running or in the queue.
+2023-12-21 18:16:02,854 - auto_focus_trace.focus - INFO - Focus: -76.74, -66.03, 72.98
+2023-12-21 18:16:05,397 - emod.submit - INFO - The job <measurements.auto_focus_trace.AutoFocusTrace object at 0x06C6F0F0> is already running or in the queue.
+2023-12-21 18:16:05,911 - emod.submit - INFO - The job <measurements.auto_focus_trace.AutoFocusTrace object at 0x06C6F0F0> is already running or in the queue.
+2023-12-21 18:16:06,561 - emod.submit - INFO - The job <measurements.auto_focus_trace.AutoFocusTrace object at 0x06C6F0F0> is already running or in the queue.
+2023-12-21 18:16:07,336 - emod.submit - INFO - The job <measurements.auto_focus_trace.AutoFocusTrace object at 0x06C6F0F0> is already running or in the queue.
+2023-12-21 18:16:07,994 - auto_focus_trace.focus - INFO - Focus: -76.59, -66.18, 72.63
+2023-12-21 18:16:09,973 - emod.submit - INFO - The job <measurements.auto_focus_trace.AutoFocusTrace object at 0x06C6F0F0> is already running or in the queue.
+2023-12-21 18:16:12,598 - auto_focus_trace.focus - INFO - Focus: -76.44, -66.23, 72.42
+2023-12-21 18:16:25,213 - emod.submit - INFO - The job <measurements.auto_focus_trace.AutoFocusTrace object at 0x06C6F0F0> is already running or in the queue.
+2023-12-21 18:16:25,509 - auto_focus_trace.focus - INFO - Focus: -76.34, -66.18, 72.42
+2023-12-21 18:16:28,499 - emod.submit - INFO - The job <measurements.auto_focus_trace.AutoFocusTrace object at 0x06C6F0F0> is already running or in the queue.
+2023-12-21 18:16:29,118 - emod.submit - INFO - The job <measurements.auto_focus_trace.AutoFocusTrace object at 0x06C6F0F0> is already running or in the queue.
+2023-12-21 18:16:29,413 - auto_focus_trace.focus - INFO - Focus: -76.34, -66.38, 72.42
+2023-12-21 18:16:33,782 - auto_focus_trace.focus - INFO - Focus: -76.14, -66.58, 71.92
+2023-12-21 18:16:51,092 - emod.submit - INFO - The job <measurements.auto_focus_trace.AutoFocusTrace object at 0x06C6F0F0> is already running or in the queue.
+2023-12-21 18:16:51,444 - auto_focus_trace.focus - INFO - Focus: -77.14, -67.58, 71.92
+2023-12-21 18:16:59,017 - auto_focus_trace.focus - INFO - Focus: -76.54, -67.88, 71.92

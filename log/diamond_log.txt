@@ -1,0 +1,6 @@
+2024-01-19 15:46:56,602 - diamond.<module> - INFO - Starting logger.
+2024-01-19 15:46:59,592 - emod.start - INFO - Starting Job Manager.
+2024-01-19 15:46:59,602 - cron.run - INFO - Starting Cron Daemon.
+2024-01-19 15:48:44,052 - diamond.<module> - INFO - Starting logger.
+2024-01-19 15:48:44,632 - emod.start - INFO - Starting Job Manager.
+2024-01-19 15:48:44,632 - cron.run - INFO - Starting Cron Daemon.
