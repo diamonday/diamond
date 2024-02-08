@@ -42,84 +42,87 @@ from tools.emod import ManagedJob, JobManager
 
 from tools.utility import timestamp
 
-class SwitchTarget( ManagedJob ):
-    
+
+class SwitchTarget(ManagedJob):
+
     def __init__(self, name=None):
         super(SwitchTarget, self).__init__()
-        self.name=name
-    
+        self.name = name
+
     def _run(self):
-        
+
         try:
-            self.state='run'
+            self.state = "run"
             if self.name is None:
                 auto_focus.next_target()
             else:
-                auto_focus.current_target=self.name            
+                auto_focus.current_target = self.name
             auto_focus._run()
         finally:
-            self.state='idle'
-            
+            self.state = "idle"
+
     def __repr__(self):
         if self.name is None:
-            return 'Switch to next Target'
+            return "Switch to next Target"
         else:
-            return 'Switch to '+str(self.name)
+            return "Switch to " + str(self.name)
 
-class SaveJob( ManagedJob ):
-    
+
+class SaveJob(ManagedJob):
+
     def __init__(self, job, filename=None, timestamp=False):
         super(SaveJob, self).__init__()
         self.job = job
         self.filename = filename
         self.timestamp = timestamp
-    
+
     def _run(self):
-        
+
         try:
-            self.state='run'
+            self.state = "run"
             job = self.job
             if self.filename is None:
-                filename=str(job)
+                filename = str(job)
             else:
-                filename=self.filename
+                filename = self.filename
             if self.timestamp:
-                filename = timestamp() + '_' + filename
+                filename = timestamp() + "_" + filename
             job.save(filename)
         finally:
-            self.state='idle'
-            
+            self.state = "idle"
+
     def __repr__(self):
         if self.filename is None:
             filename = str(self.job)
         else:
             filename = self.filename
         if self.timestamp:
-            filename = '<timestamp>_' + filename
-        return 'Save '+str(self.job)+' to '+filename
+            filename = "<timestamp>_" + filename
+        return "Save " + str(self.job) + " to " + filename
 
-class SetJob( ManagedJob ):
-    
+
+class SetJob(ManagedJob):
+
     def __init__(self, job, d):
         super(SetJob, self).__init__()
         self.job = job
         self.d = d
-    
+
     def _run(self):
-        
+
         try:
-            self.state='run'
+            self.state = "run"
             self.job.set_items(self.d)
         finally:
-            self.state='idle'
-            
-    def __repr__(self):
-        return 'Set items '+str(self.d)+' of job '+str(self.job)
+            self.state = "idle"
 
-for target in auto_focus.targets.keys():
+    def __repr__(self):
+        return "Set items " + str(self.d) + " of job " + str(self.job)
+
+
+for target in list(auto_focus.targets.keys()):
     JobManager().submit(SwitchTarget(target))
     odmr = me.odmr.ODMR()
-    odmr.stop_time=360
+    odmr.stop_time = 360
     JobManager().submit(odmr)
-    JobManager().submit(SaveJob(odmr,target+'_odmr.pys',timestamp=True))
-    
+    JobManager().submit(SaveJob(odmr, target + "_odmr.pys", timestamp=True))

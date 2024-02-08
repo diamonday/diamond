@@ -1,44 +1,125 @@
 import numpy as np
 
-from traits.api import Trait, Instance, Property, String, Range, Float, Int, Bool, Array, Enum
-from traitsui.api import View, Item, HGroup, VGroup, VSplit, Tabbed, EnumEditor, TextEditor, Group, Label
+from traits.api import (
+    Range,
+    Array,
+    Enum,
+)
+from traitsui.api import (
+    View,
+    Item,
+    HGroup,
+    VGroup,
+    Tabbed,
+    TextEditor,
+)
 
-import logging
-import time
 
 import hardware.api as ha
 
-from chaco.api import ArrayPlotData, Plot, Spectral, PlotLabel
 
-from pulsed import Pulsed
-from tools.utility import GetSetItemsHandler, GetSetItemsMixin
+from .pulsed import Pulsed
 
-class Rabi( Pulsed ):
-    
+
+class Rabi(Pulsed):
     """Defines a Rabi measurement."""
 
-    #switch      = Enum( 'mw_x','mw_b','mw_c',   desc='switch to use for different microwave source',     label='switch' )
-    switch      = Enum( 'mw_x','mw_y',   desc='switch to use for different microwave source',     label='switch' )
-    frequency   = Range(low=1,      high=20e9,  value=2.879837e9, desc='microwave frequency', label='frequency [Hz]', mode='text', auto_set=False, enter_set=True, editor=TextEditor(auto_set=False, enter_set=True, evaluate=float, format_func=lambda x:' %.6e' %x))
-    power       = Range(low=-100.,  high=25.,   value=-16,      desc='microwave power',     label='power [dBm]',    mode='text', auto_set=False, enter_set=True)
+    # switch      = Enum( 'mw_x','mw_b','mw_c',   desc='switch to use for different microwave source',     label='switch' )
+    switch = Enum(
+        "mw_x",
+        "mw_y",
+        desc="switch to use for different microwave source",
+        label="switch",
+    )
+    frequency = Range(
+        low=1,
+        high=20e9,
+        value=2.879837e9,
+        desc="microwave frequency",
+        label="frequency [Hz]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+        editor=TextEditor(
+            auto_set=False,
+            enter_set=True,
+            evaluate=float,
+            format_func=lambda x: " %.6e" % x,
+        ),
+    )
+    power = Range(
+        low=-100.0,
+        high=25.0,
+        value=-16,
+        desc="microwave power",
+        label="power [dBm]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
 
-    tau_begin   = Range(low=0., high=1e8,       value=1.5,     desc='tau begin [ns]',  label='tau begin [ns]',   mode='text', auto_set=False, enter_set=True)
-    tau_end     = Range(low=1., high=1e8,       value=4000.,     desc='tau end [ns]',    label='tau end [ns]',     mode='text', auto_set=False, enter_set=True)
-    tau_delta   = Range(low=1., high=1e6,       value=30.,      desc='delta tau [ns]',  label='delta tau [ns]',   mode='text', auto_set=False, enter_set=True)
-    laser       = Range(low=1., high=100000.,   value=3000.,    desc='laser [ns]',      label='laser [ns]',       mode='text', auto_set=False, enter_set=True)
-    wait        = Range(low=0., high=100000.,   value=1000.,    desc='wait [ns]',       label='wait [ns]',        mode='text', auto_set=False, enter_set=True)
+    tau_begin = Range(
+        low=0.0,
+        high=1e8,
+        value=1.5,
+        desc="tau begin [ns]",
+        label="tau begin [ns]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
+    tau_end = Range(
+        low=1.0,
+        high=1e8,
+        value=4000.0,
+        desc="tau end [ns]",
+        label="tau end [ns]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
+    tau_delta = Range(
+        low=1.0,
+        high=1e6,
+        value=30.0,
+        desc="delta tau [ns]",
+        label="delta tau [ns]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
+    laser = Range(
+        low=1.0,
+        high=100000.0,
+        value=3000.0,
+        desc="laser [ns]",
+        label="laser [ns]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
+    wait = Range(
+        low=0.0,
+        high=100000.0,
+        value=1000.0,
+        desc="wait [ns]",
+        label="wait [ns]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
 
-    tau = Array( value=np.array((0.,1.)) )
+    tau = Array(value=np.array((0.0, 1.0)))
 
     def apply_parameters(self):
         """Overwrites apply_parameters() from pulsed. Prior to generating sequence, etc., generate the tau mesh."""
         self.tau = np.arange(self.tau_begin, self.tau_end, self.tau_delta)
         Pulsed.apply_parameters(self)
-        
+
     def start_up(self):
         ha.PulseGenerator().Night()
         ha.MicrowaveA().setOutput(self.power, self.frequency)
-        '''
+        """
         if self.switch=='mw_a':
             ha.MicrowaveA().setOutput(self.power, self.frequency)
         elif self.switch=='mw_x' or self.switch=='mw_y':
@@ -47,8 +128,8 @@ class Rabi( Pulsed ):
             ha.MicrowaveE().setOutput(self.power, self.frequency)
         elif self.switch=='mw_c':
             ha.MicrowaveD().setOutput(self.power, self.frequency)
-        '''
-            
+        """
+
     def shut_down(self):
         ha.PulseGenerator().Light()
         ha.MicrowaveA().setOutput(None, self.frequency)
@@ -63,93 +144,194 @@ class Rabi( Pulsed ):
             ha.MicrowaveD().setOutput(None, self.frequency)
         """
 
-
     def generate_sequence(self):
         MW = self.switch
         tau = self.tau
         laser = self.laser
         wait = self.wait
         sequence = []
-        sequence += [ ([  ], 200),(['sequence'], 100  )  ]
-        sequence += [ ([  ], 1000 )  ]
+        sequence += [([], 200), (["sequence"], 100)]
+        sequence += [([], 1000)]
         for t in tau:
-            #sequence += [  ([MW, 'mw'],t),  (['laser','aom'],laser),  ([],wait)  ]
-            #sequence += [  ([MW],t),  (['laser','aom'],laser),  ([],wait)  ]
-            sequence += [  (['A','B',MW],t),  (['B','laser','aom'],laser),  (['B',],wait)  ]
+            # sequence += [  ([MW, 'mw'],t),  (['laser','aom'],laser),  ([],wait)  ]
+            # sequence += [  ([MW],t),  (['laser','aom'],laser),  ([],wait)  ]
+            sequence += [
+                (["A", "B", MW], t),
+                (["B", "laser", "aom"], laser),
+                (
+                    [
+                        "B",
+                    ],
+                    wait,
+                ),
+            ]
         return sequence
 
-    get_set_items = Pulsed.get_set_items + ['frequency','power','switch','tau_begin','tau_end','tau_delta','laser','wait','tau']
-    get_set_order = ['tau','time_bins','count_data']
+    get_set_items = Pulsed.get_set_items + [
+        "frequency",
+        "power",
+        "switch",
+        "tau_begin",
+        "tau_end",
+        "tau_delta",
+        "laser",
+        "wait",
+        "tau",
+    ]
+    get_set_order = ["tau", "time_bins", "count_data"]
 
-    traits_view = View(VGroup(HGroup(Item('submit_button',   show_label=False),
-                                     Item('remove_button',   show_label=False),
-                                     Item('resubmit_button', show_label=False),
-                                     Item('priority'),
-                                     Item('state', style='readonly'),
-                                     Item('run_time', style='readonly',format_str='%.f'),
-                                     ),
-                              Tabbed(VGroup(HGroup(Item('switch', style='custom'),
-                                                   Item('frequency',     width=-80, enabled_when='state == "idle"'),
-                                                   Item('power',         width=-80, enabled_when='state == "idle"'),
-                                                   ),
-                                            HGroup(Item('tau_begin',     width=-80, enabled_when='state == "idle"'),
-                                                   Item('tau_end',       width=-80, enabled_when='state == "idle"'),
-                                                   Item('tau_delta',     width=-80, enabled_when='state == "idle"'),
-                                                   Item('stop_time'),),
-                                            label='parameter'),
-                                     VGroup(HGroup(Item('laser',         width=-80, enabled_when='state == "idle"'),
-                                                   Item('wait',          width=-80, enabled_when='state == "idle"'),
-                                                   Item('record_length', width=-80, enabled_when='state == "idle"'),
-                                                   Item('bin_width',     width=-80, enabled_when='state == "idle"'),),
-                                     label='settings'),
-                              ),
+    traits_view = View(
+        VGroup(
+            HGroup(
+                Item("submit_button", show_label=False),
+                Item("remove_button", show_label=False),
+                Item("resubmit_button", show_label=False),
+                Item("priority"),
+                Item("state", style="readonly"),
+                Item("run_time", style="readonly", format_str="%.f"),
+            ),
+            Tabbed(
+                VGroup(
+                    HGroup(
+                        Item("switch", style="custom"),
+                        Item("frequency", width=-80, enabled_when='state == "idle"'),
+                        Item("power", width=-80, enabled_when='state == "idle"'),
+                    ),
+                    HGroup(
+                        Item("tau_begin", width=-80, enabled_when='state == "idle"'),
+                        Item("tau_end", width=-80, enabled_when='state == "idle"'),
+                        Item("tau_delta", width=-80, enabled_when='state == "idle"'),
+                        Item("stop_time"),
+                    ),
+                    label="parameter",
+                ),
+                VGroup(
+                    HGroup(
+                        Item("laser", width=-80, enabled_when='state == "idle"'),
+                        Item("wait", width=-80, enabled_when='state == "idle"'),
+                        Item(
+                            "record_length", width=-80, enabled_when='state == "idle"'
                         ),
-                       title='Rabi Measurement',
-                  )
-    
-class Rabi1( Pulsed ):
-    
+                        Item("bin_width", width=-80, enabled_when='state == "idle"'),
+                    ),
+                    label="settings",
+                ),
+            ),
+        ),
+        title="Rabi Measurement",
+    )
+
+
+class Rabi1(Pulsed):
     """Defines a Rabi measurement."""
 
-    switch      = Enum( 'mw_x','mw_b','mw_y',   desc='switch to use for different microwave source',     label='switch' )
-    frequency   = Range(low=1,      high=20e9,  value=2.8705e9, desc='microwave frequency', label='frequency [Hz]', mode='text', auto_set=False, enter_set=True)
-    power       = Range(low=-100.,  high=25.,   value=-24,      desc='microwave power',     label='power [dBm]',    mode='text', auto_set=False, enter_set=True)
+    switch = Enum(
+        "mw_x",
+        "mw_b",
+        "mw_y",
+        desc="switch to use for different microwave source",
+        label="switch",
+    )
+    frequency = Range(
+        low=1,
+        high=20e9,
+        value=2.8705e9,
+        desc="microwave frequency",
+        label="frequency [Hz]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
+    power = Range(
+        low=-100.0,
+        high=25.0,
+        value=-24,
+        desc="microwave power",
+        label="power [dBm]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
 
-    tau_begin   = Range(low=0., high=1e8,       value=1.5,     desc='tau begin [ns]',  label='tau begin [ns]',   mode='text', auto_set=False, enter_set=True)
-    tau_end     = Range(low=1., high=1e8,       value=5000.,     desc='tau end [ns]',    label='tau end [ns]',     mode='text', auto_set=False, enter_set=True)
-    tau_delta   = Range(low=1., high=1e6,       value=30.,      desc='delta tau [ns]',  label='delta tau [ns]',   mode='text', auto_set=False, enter_set=True)
-    laser       = Range(low=1., high=100000.,   value=3000.,    desc='laser [ns]',      label='laser [ns]',       mode='text', auto_set=False, enter_set=True)
-    wait        = Range(low=0., high=100000.,   value=1000.,    desc='wait [ns]',       label='wait [ns]',        mode='text', auto_set=False, enter_set=True)
+    tau_begin = Range(
+        low=0.0,
+        high=1e8,
+        value=1.5,
+        desc="tau begin [ns]",
+        label="tau begin [ns]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
+    tau_end = Range(
+        low=1.0,
+        high=1e8,
+        value=5000.0,
+        desc="tau end [ns]",
+        label="tau end [ns]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
+    tau_delta = Range(
+        low=1.0,
+        high=1e6,
+        value=30.0,
+        desc="delta tau [ns]",
+        label="delta tau [ns]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
+    laser = Range(
+        low=1.0,
+        high=100000.0,
+        value=3000.0,
+        desc="laser [ns]",
+        label="laser [ns]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
+    wait = Range(
+        low=0.0,
+        high=100000.0,
+        value=1000.0,
+        desc="wait [ns]",
+        label="wait [ns]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
 
-    tau = Array( value=np.array((0.,1.)) )
+    tau = Array(value=np.array((0.0, 1.0)))
 
     def apply_parameters(self):
         """Overwrites apply_parameters() from pulsed. Prior to generating sequence, etc., generate the tau mesh."""
         self.tau = np.arange(self.tau_begin, self.tau_end, self.tau_delta)
         Pulsed.apply_parameters(self)
-        
+
     def start_up(self):
         ha.PulseGenerator().Night()
-        if self.switch=='mw_a':
+        if self.switch == "mw_a":
             ha.MicrowaveA().setOutput(self.power, self.frequency)
-        elif self.switch=='mw_x' or self.switch=='mw_y':
+        elif self.switch == "mw_x" or self.switch == "mw_y":
             ha.MicrowaveA().setOutput(self.power, self.frequency)
-        elif self.switch=='mw_b':
+        elif self.switch == "mw_b":
             ha.MicrowaveD().setOutput(self.power, self.frequency)
-        elif self.switch=='mw_f':
+        elif self.switch == "mw_f":
             ha.MicrowaveF().setOutput(self.power, self.frequency)
-            
+
     def shut_down(self):
         ha.PulseGenerator().Light()
-        if self.switch=='mw_a':
+        if self.switch == "mw_a":
             ha.MicrowaveA().setOutput(None, self.frequency)
-        elif self.switch=='mw_x' or self.switch=='mw_y':
+        elif self.switch == "mw_x" or self.switch == "mw_y":
             ha.MicrowaveA().setOutput(None, self.frequency)
-        elif self.switch=='mw_b':
+        elif self.switch == "mw_b":
             ha.MicrowaveD().setOutput(None, self.frequency)
-        elif self.switch=='mw_f':
+        elif self.switch == "mw_f":
             ha.MicrowaveF().setOutput(None, self.frequency)
-
 
     def generate_sequence(self):
         MW = self.switch
@@ -158,39 +340,65 @@ class Rabi1( Pulsed ):
         wait = self.wait
         sequence = []
         for t in tau:
-            #sequence += [  ([MW,'mw'],t),  (['laser','aom'],laser),  ([],wait)  ]
-            sequence += [  ([MW],t),  (['laser','aom'],laser),  ([],wait)  ]
-        sequence += [ (['sequence'], 100  )  ]
+            # sequence += [  ([MW,'mw'],t),  (['laser','aom'],laser),  ([],wait)  ]
+            sequence += [([MW], t), (["laser", "aom"], laser), ([], wait)]
+        sequence += [(["sequence"], 100)]
         return sequence
 
-    get_set_items = Pulsed.get_set_items + ['frequency','power','switch','tau_begin','tau_end','tau_delta','laser','wait','tau']
-    get_set_order = ['tau','time_bins','count_data']
+    get_set_items = Pulsed.get_set_items + [
+        "frequency",
+        "power",
+        "switch",
+        "tau_begin",
+        "tau_end",
+        "tau_delta",
+        "laser",
+        "wait",
+        "tau",
+    ]
+    get_set_order = ["tau", "time_bins", "count_data"]
 
-    traits_view = View(VGroup(HGroup(Item('submit_button',   show_label=False),
-                                     Item('remove_button',   show_label=False),
-                                     Item('resubmit_button', show_label=False),
-                                     Item('priority'),
-                                     Item('state', style='readonly'),
-                                     Item('run_time', style='readonly',format_str='%.f'),
-                                     ),
-                              Tabbed(VGroup(HGroup(Item('switch', style='custom'),
-                                                   Item('frequency',     width=-80, enabled_when='state == "idle"'),
-                                                   Item('power',         width=-80, enabled_when='state == "idle"'),
-                                                   ),
-                                            HGroup(Item('tau_begin',     width=-80, enabled_when='state == "idle"'),
-                                                   Item('tau_end',       width=-80, enabled_when='state == "idle"'),
-                                                   Item('tau_delta',     width=-80, enabled_when='state == "idle"'),
-                                                   Item('stop_time'),),
-                                            label='parameter'),
-                                     VGroup(HGroup(Item('laser',         width=-80, enabled_when='state == "idle"'),
-                                                   Item('wait',          width=-80, enabled_when='state == "idle"'),
-                                                   Item('record_length', width=-80, enabled_when='state == "idle"'),
-                                                   Item('bin_width',     width=-80, enabled_when='state == "idle"'),),
-                                     label='settings'),
-                              ),
+    traits_view = View(
+        VGroup(
+            HGroup(
+                Item("submit_button", show_label=False),
+                Item("remove_button", show_label=False),
+                Item("resubmit_button", show_label=False),
+                Item("priority"),
+                Item("state", style="readonly"),
+                Item("run_time", style="readonly", format_str="%.f"),
+            ),
+            Tabbed(
+                VGroup(
+                    HGroup(
+                        Item("switch", style="custom"),
+                        Item("frequency", width=-80, enabled_when='state == "idle"'),
+                        Item("power", width=-80, enabled_when='state == "idle"'),
+                    ),
+                    HGroup(
+                        Item("tau_begin", width=-80, enabled_when='state == "idle"'),
+                        Item("tau_end", width=-80, enabled_when='state == "idle"'),
+                        Item("tau_delta", width=-80, enabled_when='state == "idle"'),
+                        Item("stop_time"),
+                    ),
+                    label="parameter",
+                ),
+                VGroup(
+                    HGroup(
+                        Item("laser", width=-80, enabled_when='state == "idle"'),
+                        Item("wait", width=-80, enabled_when='state == "idle"'),
+                        Item(
+                            "record_length", width=-80, enabled_when='state == "idle"'
                         ),
-                       title='Rabi Measurement',
-                  )
+                        Item("bin_width", width=-80, enabled_when='state == "idle"'),
+                    ),
+                    label="settings",
+                ),
+            ),
+        ),
+        title="Rabi Measurement",
+    )
+
 
 ''' 
 class Rabi_fit( Pulsed, ManagedJob, GetSetItemsMixin ):
@@ -355,42 +563,108 @@ class Rabi_fit( Pulsed, ManagedJob, GetSetItemsMixin ):
 '''
 
 
-
-class Rabi_2smiq( Pulsed ):
-    
+class Rabi_2smiq(Pulsed):
     """Defines a Rabi measurement."""
 
-    switch      = Enum( 'mw_x','mw_2','mw_y',   desc='switch to use for different microwave source',     label='switch' )
-    frequency   = Range(low=1,      high=20e9,  value=2.8705e9, desc='microwave frequency', label='frequency [Hz]', mode='text', auto_set=False, enter_set=True)
-    power       = Range(low=-100.,  high=25.,   value=-24,      desc='microwave power',     label='power [dBm]',    mode='text', auto_set=False, enter_set=True)
+    switch = Enum(
+        "mw_x",
+        "mw_2",
+        "mw_y",
+        desc="switch to use for different microwave source",
+        label="switch",
+    )
+    frequency = Range(
+        low=1,
+        high=20e9,
+        value=2.8705e9,
+        desc="microwave frequency",
+        label="frequency [Hz]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
+    power = Range(
+        low=-100.0,
+        high=25.0,
+        value=-24,
+        desc="microwave power",
+        label="power [dBm]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
 
-    tau_begin   = Range(low=0., high=1e8,       value=1.5,     desc='tau begin [ns]',  label='tau begin [ns]',   mode='text', auto_set=False, enter_set=True)
-    tau_end     = Range(low=1., high=1e8,       value=5000.,     desc='tau end [ns]',    label='tau end [ns]',     mode='text', auto_set=False, enter_set=True)
-    tau_delta   = Range(low=1., high=1e6,       value=30.,      desc='delta tau [ns]',  label='delta tau [ns]',   mode='text', auto_set=False, enter_set=True)
-    laser       = Range(low=1., high=100000.,   value=3000.,    desc='laser [ns]',      label='laser [ns]',       mode='text', auto_set=False, enter_set=True)
-    wait        = Range(low=0., high=100000.,   value=1000.,    desc='wait [ns]',       label='wait [ns]',        mode='text', auto_set=False, enter_set=True)
+    tau_begin = Range(
+        low=0.0,
+        high=1e8,
+        value=1.5,
+        desc="tau begin [ns]",
+        label="tau begin [ns]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
+    tau_end = Range(
+        low=1.0,
+        high=1e8,
+        value=5000.0,
+        desc="tau end [ns]",
+        label="tau end [ns]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
+    tau_delta = Range(
+        low=1.0,
+        high=1e6,
+        value=30.0,
+        desc="delta tau [ns]",
+        label="delta tau [ns]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
+    laser = Range(
+        low=1.0,
+        high=100000.0,
+        value=3000.0,
+        desc="laser [ns]",
+        label="laser [ns]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
+    wait = Range(
+        low=0.0,
+        high=100000.0,
+        value=1000.0,
+        desc="wait [ns]",
+        label="wait [ns]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
 
-    tau = Array( value=np.array((0.,1.)) )
+    tau = Array(value=np.array((0.0, 1.0)))
 
     def apply_parameters(self):
         """Overwrites apply_parameters() from pulsed. Prior to generating sequence, etc., generate the tau mesh."""
         self.tau = np.arange(self.tau_begin, self.tau_end, self.tau_delta)
         Pulsed.apply_parameters(self)
-        
+
     def start_up(self):
         ha.PulseGenerator().Night()
-        if self.switch=='mw_2':
+        if self.switch == "mw_2":
             ha.MicrowaveB().setOutput(self.power, self.frequency)
-        elif self.switch=='mw_x' or self.switch=='mw_y':
+        elif self.switch == "mw_x" or self.switch == "mw_y":
             ha.MicrowaveA().setOutput(self.power, self.frequency)
-            
+
     def shut_down(self):
         ha.PulseGenerator().Light()
-        if self.switch=='mw_2':
+        if self.switch == "mw_2":
             ha.MicrowaveB().setOutput(None, self.frequency)
-        elif self.switch=='mw_x' or self.switch=='mw_y':
+        elif self.switch == "mw_x" or self.switch == "mw_y":
             ha.MicrowaveA().setOutput(None, self.frequency)
-
 
     def generate_sequence(self):
         MW = self.switch
@@ -398,84 +672,178 @@ class Rabi_2smiq( Pulsed ):
         laser = self.laser
         wait = self.wait
         sequence = []
-        if MW =='mw_2':
-            trig = ['B']
-        elif MW =='mw_x' or MW =='mw_y':
-            trig = ['A', MW]
+        if MW == "mw_2":
+            trig = ["B"]
+        elif MW == "mw_x" or MW == "mw_y":
+            trig = ["A", MW]
         for t in tau:
-            #sequence += [  ([MW,'mw'],t),  (['laser','aom'],laser),  ([],wait)  ]
-            sequence += [  (trig,t),  (['laser','aom'],laser),  ([],wait)  ]
-        sequence += [ (['sequence'], 100  )  ]
+            # sequence += [  ([MW,'mw'],t),  (['laser','aom'],laser),  ([],wait)  ]
+            sequence += [(trig, t), (["laser", "aom"], laser), ([], wait)]
+        sequence += [(["sequence"], 100)]
         return sequence
 
-    get_set_items = Pulsed.get_set_items + ['frequency','power','switch','tau_begin','tau_end','tau_delta','laser','wait','tau']
-    get_set_order = ['tau','time_bins','count_data']
+    get_set_items = Pulsed.get_set_items + [
+        "frequency",
+        "power",
+        "switch",
+        "tau_begin",
+        "tau_end",
+        "tau_delta",
+        "laser",
+        "wait",
+        "tau",
+    ]
+    get_set_order = ["tau", "time_bins", "count_data"]
 
-    traits_view = View(VGroup(HGroup(Item('submit_button',   show_label=False),
-                                     Item('remove_button',   show_label=False),
-                                     Item('resubmit_button', show_label=False),
-                                     Item('priority'),
-                                     Item('state', style='readonly'),
-                                     Item('run_time', style='readonly',format_str='%.f'),
-                                     ),
-                              Tabbed(VGroup(HGroup(Item('switch', style='custom'),
-                                                   Item('frequency',     width=-80, enabled_when='state == "idle"'),
-                                                   Item('power',         width=-80, enabled_when='state == "idle"'),
-                                                   ),
-                                            HGroup(Item('tau_begin',     width=-80, enabled_when='state == "idle"'),
-                                                   Item('tau_end',       width=-80, enabled_when='state == "idle"'),
-                                                   Item('tau_delta',     width=-80, enabled_when='state == "idle"'),
-                                                   Item('stop_time'),),
-                                            label='parameter'),
-                                     VGroup(HGroup(Item('laser',         width=-80, enabled_when='state == "idle"'),
-                                                   Item('wait',          width=-80, enabled_when='state == "idle"'),
-                                                   Item('record_length', width=-80, enabled_when='state == "idle"'),
-                                                   Item('bin_width',     width=-80, enabled_when='state == "idle"'),),
-                                     label='settings'),
-                              ),
+    traits_view = View(
+        VGroup(
+            HGroup(
+                Item("submit_button", show_label=False),
+                Item("remove_button", show_label=False),
+                Item("resubmit_button", show_label=False),
+                Item("priority"),
+                Item("state", style="readonly"),
+                Item("run_time", style="readonly", format_str="%.f"),
+            ),
+            Tabbed(
+                VGroup(
+                    HGroup(
+                        Item("switch", style="custom"),
+                        Item("frequency", width=-80, enabled_when='state == "idle"'),
+                        Item("power", width=-80, enabled_when='state == "idle"'),
+                    ),
+                    HGroup(
+                        Item("tau_begin", width=-80, enabled_when='state == "idle"'),
+                        Item("tau_end", width=-80, enabled_when='state == "idle"'),
+                        Item("tau_delta", width=-80, enabled_when='state == "idle"'),
+                        Item("stop_time"),
+                    ),
+                    label="parameter",
+                ),
+                VGroup(
+                    HGroup(
+                        Item("laser", width=-80, enabled_when='state == "idle"'),
+                        Item("wait", width=-80, enabled_when='state == "idle"'),
+                        Item(
+                            "record_length", width=-80, enabled_when='state == "idle"'
                         ),
-                       title='Rabi Measurement with 2 smiq',
-                  )
+                        Item("bin_width", width=-80, enabled_when='state == "idle"'),
+                    ),
+                    label="settings",
+                ),
+            ),
+        ),
+        title="Rabi Measurement with 2 smiq",
+    )
 
-class Rabi_3smiq( Pulsed ):
-    
+
+class Rabi_3smiq(Pulsed):
     """Defines a Rabi measurement."""
 
-    switch      = Enum( 'mw_13','mw_24','mw_all_x','mw_all_y',   desc='switch to use for different microwave source',     label='switch' )
-    frequency   = Range(low=1,      high=20e9,  value=2.8705e9, desc='microwave frequency', label='frequency [Hz]', mode='text', auto_set=False, enter_set=True)
-    power       = Range(low=-100.,  high=25.,   value=-24,      desc='microwave power',     label='power [dBm]',    mode='text', auto_set=False, enter_set=True)
+    switch = Enum(
+        "mw_13",
+        "mw_24",
+        "mw_all_x",
+        "mw_all_y",
+        desc="switch to use for different microwave source",
+        label="switch",
+    )
+    frequency = Range(
+        low=1,
+        high=20e9,
+        value=2.8705e9,
+        desc="microwave frequency",
+        label="frequency [Hz]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
+    power = Range(
+        low=-100.0,
+        high=25.0,
+        value=-24,
+        desc="microwave power",
+        label="power [dBm]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
 
-    tau_begin   = Range(low=0., high=1e8,       value=1.5,     desc='tau begin [ns]',  label='tau begin [ns]',   mode='text', auto_set=False, enter_set=True)
-    tau_end     = Range(low=1., high=1e8,       value=5000.,     desc='tau end [ns]',    label='tau end [ns]',     mode='text', auto_set=False, enter_set=True)
-    tau_delta   = Range(low=1., high=1e6,       value=30.,      desc='delta tau [ns]',  label='delta tau [ns]',   mode='text', auto_set=False, enter_set=True)
-    laser       = Range(low=1., high=100000.,   value=3000.,    desc='laser [ns]',      label='laser [ns]',       mode='text', auto_set=False, enter_set=True)
-    wait        = Range(low=0., high=100000.,   value=1000.,    desc='wait [ns]',       label='wait [ns]',        mode='text', auto_set=False, enter_set=True)
+    tau_begin = Range(
+        low=0.0,
+        high=1e8,
+        value=1.5,
+        desc="tau begin [ns]",
+        label="tau begin [ns]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
+    tau_end = Range(
+        low=1.0,
+        high=1e8,
+        value=5000.0,
+        desc="tau end [ns]",
+        label="tau end [ns]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
+    tau_delta = Range(
+        low=1.0,
+        high=1e6,
+        value=30.0,
+        desc="delta tau [ns]",
+        label="delta tau [ns]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
+    laser = Range(
+        low=1.0,
+        high=100000.0,
+        value=3000.0,
+        desc="laser [ns]",
+        label="laser [ns]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
+    wait = Range(
+        low=0.0,
+        high=100000.0,
+        value=1000.0,
+        desc="wait [ns]",
+        label="wait [ns]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
 
-    tau = Array( value=np.array((0.,1.)) )
+    tau = Array(value=np.array((0.0, 1.0)))
 
     def apply_parameters(self):
         """Overwrites apply_parameters() from pulsed. Prior to generating sequence, etc., generate the tau mesh."""
         self.tau = np.arange(self.tau_begin, self.tau_end, self.tau_delta)
         Pulsed.apply_parameters(self)
-        
+
     def start_up(self):
         ha.PulseGenerator().Night()
-        if self.switch=='mw_13':
+        if self.switch == "mw_13":
             ha.MicrowaveA().setOutput(self.power, self.frequency)
-        elif self.switch=='mw_24':
+        elif self.switch == "mw_24":
             ha.MicrowaveB().setOutput(self.power, self.frequency)
-        elif self.switch=='mw_all_x' or self.switch=='mw_all_y':
+        elif self.switch == "mw_all_x" or self.switch == "mw_all_y":
             ha.MicrowaveC().setOutput(self.power, self.frequency)
-            
+
     def shut_down(self):
         ha.PulseGenerator().Light()
-        if self.switch=='mw_13':
+        if self.switch == "mw_13":
             ha.MicrowaveA().setOutput(None, self.frequency)
-        elif self.switch=='mw_24':
+        elif self.switch == "mw_24":
             ha.MicrowaveB().setOutput(None, self.frequency)
-        elif self.switch=='mw_all_x' or self.switch=='mw_all_y':
+        elif self.switch == "mw_all_x" or self.switch == "mw_all_y":
             ha.MicrowaveC().setOutput(None, self.frequency)
-
 
     def generate_sequence(self):
         MW = self.switch
@@ -485,35 +853,60 @@ class Rabi_3smiq( Pulsed ):
         sequence = []
         trig = [MW]
         for t in tau:
-            sequence += [  (trig,t),  (['laser','aom'],laser),  ([],wait)  ]
-        sequence += [ (['sequence'], 100  )  ]
+            sequence += [(trig, t), (["laser", "aom"], laser), ([], wait)]
+        sequence += [(["sequence"], 100)]
         return sequence
 
-    get_set_items = Pulsed.get_set_items + ['frequency','power','switch','tau_begin','tau_end','tau_delta','laser','wait','tau']
-    get_set_order = ['tau','time_bins','count_data']
+    get_set_items = Pulsed.get_set_items + [
+        "frequency",
+        "power",
+        "switch",
+        "tau_begin",
+        "tau_end",
+        "tau_delta",
+        "laser",
+        "wait",
+        "tau",
+    ]
+    get_set_order = ["tau", "time_bins", "count_data"]
 
-    traits_view = View(VGroup(HGroup(Item('submit_button',   show_label=False),
-                                     Item('remove_button',   show_label=False),
-                                     Item('resubmit_button', show_label=False),
-                                     Item('priority'),
-                                     Item('state', style='readonly'),
-                                     Item('run_time', style='readonly',format_str='%.f'),
-                                     ),
-                              Tabbed(VGroup(HGroup(Item('switch', style='custom'),
-                                                   Item('frequency',     width=-80, enabled_when='state == "idle"'),
-                                                   Item('power',         width=-80, enabled_when='state == "idle"'),
-                                                   ),
-                                            HGroup(Item('tau_begin',     width=-80, enabled_when='state == "idle"'),
-                                                   Item('tau_end',       width=-80, enabled_when='state == "idle"'),
-                                                   Item('tau_delta',     width=-80, enabled_when='state == "idle"'),
-                                                   Item('stop_time'),),
-                                            label='parameter'),
-                                     VGroup(HGroup(Item('laser',         width=-80, enabled_when='state == "idle"'),
-                                                   Item('wait',          width=-80, enabled_when='state == "idle"'),
-                                                   Item('record_length', width=-80, enabled_when='state == "idle"'),
-                                                   Item('bin_width',     width=-80, enabled_when='state == "idle"'),),
-                                     label='settings'),
-                              ),
+    traits_view = View(
+        VGroup(
+            HGroup(
+                Item("submit_button", show_label=False),
+                Item("remove_button", show_label=False),
+                Item("resubmit_button", show_label=False),
+                Item("priority"),
+                Item("state", style="readonly"),
+                Item("run_time", style="readonly", format_str="%.f"),
+            ),
+            Tabbed(
+                VGroup(
+                    HGroup(
+                        Item("switch", style="custom"),
+                        Item("frequency", width=-80, enabled_when='state == "idle"'),
+                        Item("power", width=-80, enabled_when='state == "idle"'),
+                    ),
+                    HGroup(
+                        Item("tau_begin", width=-80, enabled_when='state == "idle"'),
+                        Item("tau_end", width=-80, enabled_when='state == "idle"'),
+                        Item("tau_delta", width=-80, enabled_when='state == "idle"'),
+                        Item("stop_time"),
+                    ),
+                    label="parameter",
+                ),
+                VGroup(
+                    HGroup(
+                        Item("laser", width=-80, enabled_when='state == "idle"'),
+                        Item("wait", width=-80, enabled_when='state == "idle"'),
+                        Item(
+                            "record_length", width=-80, enabled_when='state == "idle"'
                         ),
-                       title='Rabi Measurement with 3 smiq',
-                  )
+                        Item("bin_width", width=-80, enabled_when='state == "idle"'),
+                    ),
+                    label="settings",
+                ),
+            ),
+        ),
+        title="Rabi Measurement with 3 smiq",
+    )

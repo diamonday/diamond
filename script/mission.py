@@ -38,48 +38,49 @@ certain measurement tasks.
          difficult to test --> error prone
 """
 
-from tools.emod import Job, JobManager
+from tools.emod import Job
 
 from tools.utility import timestamp
 
 import threading
 
-#ToDo: maybe introduce lock for 'state' variable on each job?
+# ToDo: maybe introduce lock for 'state' variable on each job?
 
-class Mission( Job ):
+
+class Mission(Job):
 
     def _run(self):
 
         try:
-            self.state='run'
-            
-            for target in auto_focus.targets.keys():
-                
-                auto_focus.periodic_focus=False
-                while auto_focus.state != 'idle':
-                    threading.currentThread().stop_request.wait(1.0)
-                    if threading.currentThread().stop_request.isSet():
-                        break
-                auto_focus.current_target=target            
-                auto_focus.submit()
-                auto_focus.periodic_focus=True
-                
-                odmr = me.odmr.ODMR()
-                odmr.stop_time=60
-                odmr.submit()
-                while odmr.state != 'done':
-                    threading.currentThread().stop_request.wait(1.0)
-                    if threading.currentThread().stop_request.isSet():
-                        break
-                odmr.save(timestamp()+'_'+target+'_odmr.pys')
-                
-            self.state='done'
-        finally:
-            self.state='error'
+            self.state = "run"
 
-if __name__=='__main__':
+            for target in list(auto_focus.targets.keys()):
+
+                auto_focus.periodic_focus = False
+                while auto_focus.state != "idle":
+                    threading.currentThread().stop_request.wait(1.0)
+                    if threading.currentThread().stop_request.isSet():
+                        break
+                auto_focus.current_target = target
+                auto_focus.submit()
+                auto_focus.periodic_focus = True
+
+                odmr = me.odmr.ODMR()
+                odmr.stop_time = 60
+                odmr.submit()
+                while odmr.state != "done":
+                    threading.currentThread().stop_request.wait(1.0)
+                    if threading.currentThread().stop_request.isSet():
+                        break
+                odmr.save(timestamp() + "_" + target + "_odmr.pys")
+
+            self.state = "done"
+        finally:
+            self.state = "error"
+
+
+if __name__ == "__main__":
 
     mission = Mission()
-    
-    mission.start()
 
+    mission.start()

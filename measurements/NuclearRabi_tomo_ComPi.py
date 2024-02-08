@@ -1,33 +1,38 @@
 from tokenize import String
+
 import numpy as np
 
 fft = np.fft.fft
 ifft = np.fft.ifft
 
-from hardware.waveform import Sin, IQWaveform, Sequence, Idle
-from hardware.waveform610 import Waveform610
 
-from traits.api import Instance, Property, String, Range, Float, Int, Bool, Array, List, Enum, Trait,\
-                        Button, on_trait_change, cached_property, Code
-from traitsui.api import View, Item, HGroup, VGroup, Tabbed, VSplit, TextEditor#, EnumEditor, RangeEditor, 
-from traitsui.menu import Action, Menu, MenuBar
+from enable.api import ComponentEditor
+from traits.api import (
+    Bool,
+    Float,
+    Range,
+    String,
+    on_trait_change,
+)
+from traitsui.api import (
+    HGroup,
+    Item,
+    Tabbed,  # , EnumEditor, RangeEditor,
+    TextEditor,
+    VGroup,
+    View,
+    VSplit,
+)
 from traitsui.file_dialog import save_file
-
-from enable.api import Component, ComponentEditor
-from chaco.api import ArrayDataSource, LinePlot, LinearMapper, ArrayPlotData, Plot, CMapImagePlot
-from chaco.tools.api import PanTool
-from chaco.tools.simple_zoom import SimpleZoom
-
-import logging
-import time
+from traitsui.menu import Action, Menu, MenuBar
 
 import analysis.fitting as fitting
-
-from tools.emod import ManagedJob
-from tools.utility import GetSetItemsMixin, GetSetItemsHandler
-from tools.color import scheme
-
+from hardware.waveform import Idle, Sequence, Sin
+from hardware.waveform610 import Waveform610
 from measurements.pulsed_2smiq_awg_rf import Pulsed
+from tools.color import scheme
+from tools.utility import GetSetItemsHandler
+
 # # matplotlib stuff
 # from tools.utility import MPLFigureEditor
 # from matplotlib.figure import Figure as MPLFigure
@@ -39,111 +44,198 @@ from measurements.pulsed_2smiq_awg_rf import Pulsed
 # Todo: Consider the stub in waveform and waveform610. Since there is only Pi pulse in NuclearRabi, the phase difference of mw because of the stub in pi mw pulse seems doesn't influence the signal. Be careful if there is any non-pi pulse.
 
 
-
 def find_laser_pulses(sequence):
     n = 0
     prev = []
     for channels, t in sequence:
-        if 'laser' in channels and not 'laser' in prev:
+        if "laser" in channels and not "laser" in prev:
             n += 1
         prev = channels
-        if ('sequence' in channels) and (n>0):
+        if ("sequence" in channels) and (n > 0):
             break
     return n
 
-class PulsedToolHandler( GetSetItemsHandler ):
+
+class PulsedToolHandler(GetSetItemsHandler):
     def save_matrix_plot(self, info):
-        filename = save_file(title='Save Matrix Plot')
-        if filename is '':
+        filename = save_file(title="Save Matrix Plot")
+        if filename is "":
             return
         else:
-            if filename.find('.png')==-1:
-                filename=filename+'.png'
+            if filename.find(".png") == -1:
+                filename = filename + ".png"
             info.object.save_matrix_plot(filename)
-    
+
     def save_line_plot(self, info):
-        filename = save_file(title='Save Line Plot')
-        if filename is '':
+        filename = save_file(title="Save Line Plot")
+        if filename is "":
             return
         else:
-            if filename.find('.png')==-1:
-                filename=filename+'.png'
+            if filename.find(".png") == -1:
+                filename = filename + ".png"
             info.object.save_line_plot(filename)
 
     def save_fft_plot(self, info):
-        filename = save_file(title='Save FFT Plot')
-        if filename is '':
+        filename = save_file(title="Save FFT Plot")
+        if filename is "":
             return
         else:
-            if filename.find('.png')==-1:
-                filename=filename+'.png'
+            if filename.find(".png") == -1:
+                filename = filename + ".png"
             info.object.save_fft_plot(filename)
-    
+
     def save_pulse_plot(self, info):
-        filename = save_file(title='Save Pulse Plot')
-        if filename is '':
+        filename = save_file(title="Save Pulse Plot")
+        if filename is "":
             return
         else:
-            if filename.find('.png')==-1:
-                filename=filename+'.png'
+            if filename.find(".png") == -1:
+                filename = filename + ".png"
             info.object.save_pulse_plot(filename)
 
 
-class NuclearRabi_smiq_Nnorm( Pulsed ):
-
+class NuclearRabi_smiq_Nnorm(Pulsed):
     """NuclearRabi measurement."""
+
     """2smiq and use the VQE tomo method to read nuclear rabi"""
-    
+
     """The 1st smiq is for selective 13 pi pulse and the 2nd smiq is for selective 24 pi pulse"""
-    mw_pi   = Range(low=1., high=100000., value=100, desc='length of mw pi pulse [ns]', label='mw_pi [ns]', mode='text', auto_set=False, enter_set=True)
-    mw_pi_2 = Range(low=1., high=100000., value=600, desc='length of mw pi pulse of the second smiq[ns]', label='mw_pi 2 [ns]', mode='text', auto_set=False, enter_set=True)
+    mw_pi = Range(
+        low=1.0,
+        high=100000.0,
+        value=100,
+        desc="length of mw pi pulse [ns]",
+        label="mw_pi [ns]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
+    mw_pi_2 = Range(
+        low=1.0,
+        high=100000.0,
+        value=600,
+        desc="length of mw pi pulse of the second smiq[ns]",
+        label="mw_pi 2 [ns]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
 
     """awg610"""
-    mw_pi_rf   = Range(low=1., high=10000000., value=100000, desc='length of rf pi pulse [ns]', label='mw_pi_rf [ns]', mode='text', auto_set=False, enter_set=True)
+    mw_pi_rf = Range(
+        low=1.0,
+        high=10000000.0,
+        value=100000,
+        desc="length of rf pi pulse [ns]",
+        label="mw_pi_rf [ns]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+    )
 
-    main_dir_rf = String('\NRabi', desc='.WFM/.PAT folder in AWG 610', label='Waveform_rf Dir.')
-    freq_awg_rf = Range(low=1, high=2.6e9, value=2.940e6, desc='AWG_rf frequency', label='AWG_rf frequency [Hz]', mode='text', auto_set=False, enter_set=True, editor=TextEditor(auto_set=False, enter_set=True, evaluate=float, format_str='%e'))
-    phase_sin_rf = Range(low=-100.0, high=100.0, value=0.0, desc='Multiple of pi', label='Phase', mode='text', auto_set=False, enter_set=True, editor=TextEditor(auto_set=False, enter_set=True, evaluate=float, format_str='%e'))
-    
-    amp1_rf  = Range(low=0.0, high=1.0, value=1.0, desc='Waveform_rf amplitude factor', label='wfm amp', auto_set=False, enter_set=True)
-    
-    splitting = Range(low=1, high=20e9,  value=2.160241e6, desc='peak splitting', label='splitting [Hz]', mode='text', auto_set=False, enter_set=True, editor=TextEditor(auto_set=False, enter_set=True, evaluate=float, format_str='%e'))
+    main_dir_rf = String(
+        "\nRabi", desc=".WFM/.PAT folder in AWG 610", label="Waveform_rf Dir."
+    )
+    freq_awg_rf = Range(
+        low=1,
+        high=2.6e9,
+        value=2.940e6,
+        desc="AWG_rf frequency",
+        label="AWG_rf frequency [Hz]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+        editor=TextEditor(
+            auto_set=False, enter_set=True, evaluate=float, format_str="%e"
+        ),
+    )
+    phase_sin_rf = Range(
+        low=-100.0,
+        high=100.0,
+        value=0.0,
+        desc="Multiple of pi",
+        label="Phase",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+        editor=TextEditor(
+            auto_set=False, enter_set=True, evaluate=float, format_str="%e"
+        ),
+    )
 
-    show_fit = Bool(False, label='show fit')
-    
-    #fit parameters
-    fit_parameters = np.ones(3) #changed from 4 to 3
-    rabi_period    = Float(value=0.0, label='T')
-    rabi_frequency = Float(value=0.0, label='f')
-    rabi_contrast  = Float(value=0.0, label='I')
-    rabi_offset    = Float(value=0.0, label='t_0')
-    pi2            = Float(value=0.0, label='pi/2')
-    pi             = Float(value=0.0, label='pi')
-    pi32           = Float(value=0.0, label='3pi/2')
-    
-    get_set_items = Pulsed.get_set_items + [ 'freq_awg_rf', 'amp1_rf', 'show_fit', 'fit_parameters', 'rabi_frequency', 'rabi_period',
-        'rabi_offset', 'rabi_contrast', 'pi2', 'pi', 'pi32',  'mw_pi', 'mw_pi_2',  'mw_pi_rf', 'splitting'
+    amp1_rf = Range(
+        low=0.0,
+        high=1.0,
+        value=1.0,
+        desc="Waveform_rf amplitude factor",
+        label="wfm amp",
+        auto_set=False,
+        enter_set=True,
+    )
+
+    splitting = Range(
+        low=1,
+        high=20e9,
+        value=2.160241e6,
+        desc="peak splitting",
+        label="splitting [Hz]",
+        mode="text",
+        auto_set=False,
+        enter_set=True,
+        editor=TextEditor(
+            auto_set=False, enter_set=True, evaluate=float, format_str="%e"
+        ),
+    )
+
+    show_fit = Bool(False, label="show fit")
+
+    # fit parameters
+    fit_parameters = np.ones(3)  # changed from 4 to 3
+    rabi_period = Float(value=0.0, label="T")
+    rabi_frequency = Float(value=0.0, label="f")
+    rabi_contrast = Float(value=0.0, label="I")
+    rabi_offset = Float(value=0.0, label="t_0")
+    pi2 = Float(value=0.0, label="pi/2")
+    pi = Float(value=0.0, label="pi")
+    pi32 = Float(value=0.0, label="3pi/2")
+
+    get_set_items = Pulsed.get_set_items + [
+        "freq_awg_rf",
+        "amp1_rf",
+        "show_fit",
+        "fit_parameters",
+        "rabi_frequency",
+        "rabi_period",
+        "rabi_offset",
+        "rabi_contrast",
+        "pi2",
+        "pi",
+        "pi32",
+        "mw_pi",
+        "mw_pi_2",
+        "mw_pi_rf",
+        "splitting",
     ]
-    
-    def __init__(self, pulse_generator, time_tagger, microwave, microwave2, awg_rf, **kwargs):
+
+    def __init__(
+        self, pulse_generator, time_tagger, microwave, microwave2, awg_rf, **kwargs
+    ):
         self.dual = False
-        super(NuclearRabi_smiq_Nnorm, self).__init__(pulse_generator, time_tagger, microwave, microwave2, awg_rf, **kwargs)
+        super(NuclearRabi_smiq_Nnorm, self).__init__(
+            pulse_generator, time_tagger, microwave, microwave2, awg_rf, **kwargs
+        )
         self.show_fit = True
         self.frequency2 = self.frequency - self.splitting
-        
-    
-    
-    @on_trait_change('frequency')
+
+    @on_trait_change("frequency")
     def _update_frequency2(self):
         self.frequency2 = self.frequency - self.splitting
 
-
-
     # Sequence ############################
     def generate_sequence(self):
-        tau   = self.tau
+        tau = self.tau
         laser = self.laser
-        wait  = self.wait
+        wait = self.wait
         trig_interval_rf = self.trig_interval_rf
         trig_delay_rf = self.trig_delay_rf
 
@@ -151,132 +243,169 @@ class NuclearRabi_smiq_Nnorm( Pulsed ):
         mw_pi_2 = self.mw_pi_2
         mw_pi_rf = self.mw_pi_rf
 
-        #using AOM so no need to consider duty cycle
+        # using AOM so no need to consider duty cycle
         max_time = tau[-1]
         if max_time < mw_pi_rf:
-            print('end tau too small')
+            print("end tau too small")
 
         if mw_pi > mw_pi_2:
             hard_pi_seq = [
-                (['A','mw_x','B'], mw_pi_2),
-                (['A','mw_x'], mw_pi - mw_pi_2)
+                (["A", "mw_x", "B"], mw_pi_2),
+                (["A", "mw_x"], mw_pi - mw_pi_2),
             ]
             hard_pi_t = mw_pi
         else:
-            hard_pi_seq = [
-                (['A','mw_x','B'], mw_pi),
-                (['B'], mw_pi_2 - mw_pi)
-            ]
+            hard_pi_seq = [(["A", "mw_x", "B"], mw_pi), (["B"], mw_pi_2 - mw_pi)]
             hard_pi_t = mw_pi_2
 
         """To use the 1st smiq, generate 'A' and 'mw_x' trigger"""
         """To use the 2nd smiq, generate 'B' trigger"""
         sequence = [
-            ([], max_time + trig_interval_rf + trig_delay_rf + hard_pi_t + mw_pi + mw_pi_rf - 100),#consider (['sequence'], 100)#using AOM so no need to consider duty cycle
-            (['aom'], laser),
-            (['aom'], (576+120000) * 1e9 /self.sampling_rf + 450 ),#120000 is for microwave heating
-            ([], wait )
+            (
+                [],
+                max_time
+                + trig_interval_rf
+                + trig_delay_rf
+                + hard_pi_t
+                + mw_pi
+                + mw_pi_rf
+                - 100,
+            ),  # consider (['sequence'], 100)#using AOM so no need to consider duty cycle
+            (["aom"], laser),
+            (
+                ["aom"],
+                (576 + 120000) * 1e9 / self.sampling_rf + 450,
+            ),  # 120000 is for microwave heating
+            ([], wait),
         ]
-        
+
         "First 4 sequences to calibrate TOMO intial state count"
-        'N1'
-        #using AOM so no need to consider duty cycle
-        sequence.append(([], max_time + trig_interval_rf + trig_delay_rf + hard_pi_t + mw_pi + mw_pi_rf)) # the typical time between the laser illumination is : wait + max_time + trig_interval_rf + trig_delay_rf + hard_pi_t + mw_pi + mw_pi_rf
-        sequence.append((['laser', 'aom'], laser))
-        sequence.append((['aom' ], (576+120000) * 1e9 /self.sampling_rf + 450 )) #for trigger dead time of awg610(for awg520, we can ignore it if we set the sampling rate as 1e9)
+        "N1"
+        # using AOM so no need to consider duty cycle
+        sequence.append(
+            (
+                [],
+                max_time
+                + trig_interval_rf
+                + trig_delay_rf
+                + hard_pi_t
+                + mw_pi
+                + mw_pi_rf,
+            )
+        )  # the typical time between the laser illumination is : wait + max_time + trig_interval_rf + trig_delay_rf + hard_pi_t + mw_pi + mw_pi_rf
+        sequence.append((["laser", "aom"], laser))
+        sequence.append(
+            (["aom"], (576 + 120000) * 1e9 / self.sampling_rf + 450)
+        )  # for trigger dead time of awg610(for awg520, we can ignore it if we set the sampling rate as 1e9)
         sequence.append(([], wait))
 
-        'N2'
-        #using AOM so no need to consider duty cycle
+        "N2"
+        # using AOM so no need to consider duty cycle
         sequence.append(([], max_time + mw_pi - hard_pi_t))
-        sequence.append((['awg_rf'],  trig_interval_rf))
+        sequence.append((["awg_rf"], trig_interval_rf))
         sequence.append(([], trig_delay_rf))
         sequence += hard_pi_seq
         sequence.append(([], mw_pi_rf))
         sequence += hard_pi_seq
-        sequence.append((['laser', 'aom'], laser))
-        sequence.append((['aom' ], (576+120000) * 1e9 /self.sampling_rf + 450 )) #for trigger dead time of awg610(for awg520, we can ignore it if we set the sampling rate as 1e9)
+        sequence.append((["laser", "aom"], laser))
+        sequence.append(
+            (["aom"], (576 + 120000) * 1e9 / self.sampling_rf + 450)
+        )  # for trigger dead time of awg610(for awg520, we can ignore it if we set the sampling rate as 1e9)
         sequence.append(([], wait))
 
-        'N3'
-        #using AOM so no need to consider duty cycle
-        sequence.append(([], max_time + trig_interval_rf + trig_delay_rf + mw_pi + mw_pi_rf))
+        "N3"
+        # using AOM so no need to consider duty cycle
+        sequence.append(
+            ([], max_time + trig_interval_rf + trig_delay_rf + mw_pi + mw_pi_rf)
+        )
         sequence += hard_pi_seq
-        sequence.append((['laser', 'aom'], laser))
-        sequence.append((['aom' ], (576+120000) * 1e9 /self.sampling_rf + 450 )) #for trigger dead time of awg610(for awg520, we can ignore it if we set the sampling rate as 1e9)
+        sequence.append((["laser", "aom"], laser))
+        sequence.append(
+            (["aom"], (576 + 120000) * 1e9 / self.sampling_rf + 450)
+        )  # for trigger dead time of awg610(for awg520, we can ignore it if we set the sampling rate as 1e9)
         sequence.append(([], wait))
 
-        'N4'
-        #using AOM so no need to consider duty cycle
+        "N4"
+        # using AOM so no need to consider duty cycle
         sequence.append(([], max_time + mw_pi))
-        sequence.append((['awg_rf'],  trig_interval_rf))
+        sequence.append((["awg_rf"], trig_interval_rf))
         sequence.append(([], trig_delay_rf))
         sequence += hard_pi_seq
         sequence.append(([], mw_pi_rf))
-        sequence.append((['laser', 'aom'], laser))
-        sequence.append((['aom' ], (576+120000) * 1e9 /self.sampling_rf + 450 )) #for trigger dead time of awg610(for awg520, we can ignore it if we set the sampling rate as 1e9)
+        sequence.append((["laser", "aom"], laser))
+        sequence.append(
+            (["aom"], (576 + 120000) * 1e9 / self.sampling_rf + 450)
+        )  # for trigger dead time of awg610(for awg520, we can ignore it if we set the sampling rate as 1e9)
         sequence.append(([], wait))
 
         for t in tau:
             "Every t need to measure 4 kinds of population"
-            'Tomo 0'
-            #using AOM so no need to consider duty cycle
-            sequence.append(([], max_time - t + mw_pi_rf)) 
-            sequence.append((['awg_rf'],  trig_interval_rf))
+            "Tomo 0"
+            # using AOM so no need to consider duty cycle
+            sequence.append(([], max_time - t + mw_pi_rf))
+            sequence.append((["awg_rf"], trig_interval_rf))
             sequence.append(([], trig_delay_rf))
             sequence += hard_pi_seq
             sequence.append(([], t))
-            sequence.append((['A','mw_x'], mw_pi))
-            sequence.append((['laser', 'aom'], laser))
-            sequence.append((['aom' ], (576+120000) * 1e9 /self.sampling_rf + 450 )) #for trigger dead time of awg610(for awg520, we can ignore it if we set the sampling rate as 1e9)
+            sequence.append((["A", "mw_x"], mw_pi))
+            sequence.append((["laser", "aom"], laser))
+            sequence.append(
+                (["aom"], (576 + 120000) * 1e9 / self.sampling_rf + 450)
+            )  # for trigger dead time of awg610(for awg520, we can ignore it if we set the sampling rate as 1e9)
             sequence.append(([], wait))
 
-            'Tomo pi13'
-            #using AOM so no need to consider duty cycle
-            sequence.append(([], max_time - t + mw_pi + mw_pi_rf)) 
-            sequence.append((['awg_rf'],  trig_interval_rf))
+            "Tomo pi13"
+            # using AOM so no need to consider duty cycle
+            sequence.append(([], max_time - t + mw_pi + mw_pi_rf))
+            sequence.append((["awg_rf"], trig_interval_rf))
             sequence.append(([], trig_delay_rf))
             sequence += hard_pi_seq
             sequence.append(([], t))
-            sequence.append((['laser', 'aom'], laser))
-            sequence.append((['aom' ], (576+120000) * 1e9 /self.sampling_rf + 450 )) #for trigger dead time of awg610(for awg520, we can ignore it if we set the sampling rate as 1e9)
+            sequence.append((["laser", "aom"], laser))
+            sequence.append(
+                (["aom"], (576 + 120000) * 1e9 / self.sampling_rf + 450)
+            )  # for trigger dead time of awg610(for awg520, we can ignore it if we set the sampling rate as 1e9)
             sequence.append(([], wait))
 
-            'Tomo pi34'
-            #using AOM so no need to consider duty cycle
-            sequence.append(([], max_time - t)) 
-            sequence.append((['awg_rf'],  trig_interval_rf))
+            "Tomo pi34"
+            # using AOM so no need to consider duty cycle
+            sequence.append(([], max_time - t))
+            sequence.append((["awg_rf"], trig_interval_rf))
             sequence.append(([], trig_delay_rf))
             sequence += hard_pi_seq
             sequence.append(([], t))
-            sequence.append((['A','mw_x'], mw_pi))
+            sequence.append((["A", "mw_x"], mw_pi))
             sequence.append(([], mw_pi_rf))
-            sequence.append((['laser', 'aom'], laser))
-            sequence.append((['aom' ], (576+120000) * 1e9 /self.sampling_rf + 450 )) #for trigger dead time of awg610(for awg520, we can ignore it if we set the sampling rate as 1e9)
+            sequence.append((["laser", "aom"], laser))
+            sequence.append(
+                (["aom"], (576 + 120000) * 1e9 / self.sampling_rf + 450)
+            )  # for trigger dead time of awg610(for awg520, we can ignore it if we set the sampling rate as 1e9)
             sequence.append(([], wait))
 
-            'Tomo Pi'
-            #using AOM so no need to consider duty cycle
-            sequence.append(([], max_time - t - mw_pi_2 + mw_pi + mw_pi_rf)) 
-            sequence.append((['awg_rf'],  trig_interval_rf))
+            "Tomo Pi"
+            # using AOM so no need to consider duty cycle
+            sequence.append(([], max_time - t - mw_pi_2 + mw_pi + mw_pi_rf))
+            sequence.append((["awg_rf"], trig_interval_rf))
             sequence.append(([], trig_delay_rf))
             sequence += hard_pi_seq
             sequence.append(([], t))
-            sequence.append((['B'], mw_pi_2))
-            sequence.append((['laser', 'aom'], laser))
-            sequence.append((['aom' ], (576+120000) * 1e9 /self.sampling_rf + 450 )) #for trigger dead time of awg610(for awg520, we can ignore it if we set the sampling rate as 1e9)
+            sequence.append((["B"], mw_pi_2))
+            sequence.append((["laser", "aom"], laser))
+            sequence.append(
+                (["aom"], (576 + 120000) * 1e9 / self.sampling_rf + 450)
+            )  # for trigger dead time of awg610(for awg520, we can ignore it if we set the sampling rate as 1e9)
             sequence.append(([], wait))
 
-        sequence.append((['sequence'], 100))
-        
+        sequence.append((["sequence"], 100))
+
         return sequence
-    
+
     def compile_waveforms(self):
         # awg frequency in terms of sampling rate
-        #f1 = (self.freq1 - self.freq)/self.sampling
+        # f1 = (self.freq1 - self.freq)/self.sampling
 
-        f1_rf = self.freq_awg_rf/self.sampling_rf
-        phase_rf = self.phase_sin_rf*np.pi
+        f1_rf = self.freq_awg_rf / self.sampling_rf
+        phase_rf = self.phase_sin_rf * np.pi
         mw_pi_rft = self.mw_pi * self.sampling_rf / 1e9
         mw_pi_2_rft = self.mw_pi * self.sampling_rf / 1e9
         mw_pi_rf_rft = self.mw_pi_rf * self.sampling_rf / 1e9
@@ -289,165 +418,174 @@ class NuclearRabi_smiq_Nnorm( Pulsed ):
         # pulse objects
         mw_rf = Sin(0, freq=f1_rf, amp=self.amp1_rf, phase=phase_rf)
         zero_rf = Idle(1)
-        
+
         # pulse sequence
         carry = Idle(0)
-        carry.duration = int(hard_pi_t_rft) 
+        carry.duration = int(hard_pi_t_rft)
 
         pulse_sequence_rf = [carry] + [mw_rf] + [zero_rf]
-        
-
 
         # for tomo_pi34
         mw_pi_2_rft = self.mw_pi_2 * self.sampling_rf / 1e9
         carry_pi13 = Idle(0)
-        carry_pi13.duration = int(mw_pi_rft) 
+        carry_pi13.duration = int(mw_pi_rft)
         mw_rf_tomo_pi34 = Sin(0, freq=f1_rf, amp=self.amp1_rf, phase=phase_rf)
         mw_rf_pi34 = Sin(mw_pi_rf_rft, freq=f1_rf, amp=self.amp1_rf, phase=phase_rf)
-        pulse_sequence_rf_tomo_pi34 = [carry] + [mw_rf_tomo_pi34] +[carry_pi13] + [mw_rf_pi34] + [zero_rf]
-        
-        
-        
+        pulse_sequence_rf_tomo_pi34 = (
+            [carry] + [mw_rf_tomo_pi34] + [carry_pi13] + [mw_rf_pi34] + [zero_rf]
+        )
+
         # increment microwave duration
-        '''
+        """
         #4/5
         name2 = 'NRABI_pi2' 
         waves2 = IQWaveform(name2, pulse_sequence2, offset=0, file_type=0, sampling=self.sampling) # 0 for wfm file and 1 for pat file
         #wave1 = Waveform(name1, pulse_sequence, offset=0, file_type=0, sampling=self.sampling)# 0 for wfm file and 1 for pat file
         self.waves.append(waves2[0])
         self.waves.append(waves2[1])
-        '''
-            
+        """
 
-        seq_rf=Sequence('NRABI')
+        seq_rf = Sequence("NRABI")
 
-        #for N2
+        # for N2
         mw_rf.duration = mw_pi_rf_rft
-        name_rf = 'NRABI_pi_rf'
-        #waves = IQWaveform(name, pulse_sequence, file_type=0) # 0 for wfm file and 1 for pat file
-        wave_rf = Waveform610(name_rf, pulse_sequence_rf, offset=0, file_type=0, sampling=self.sampling_rf)# 0 for wfm file and 1 for pat file
+        name_rf = "NRABI_pi_rf"
+        # waves = IQWaveform(name, pulse_sequence, file_type=0) # 0 for wfm file and 1 for pat file
+        wave_rf = Waveform610(
+            name_rf, pulse_sequence_rf, offset=0, file_type=0, sampling=self.sampling_rf
+        )  # 0 for wfm file and 1 for pat file
         self.waves_rf.append(wave_rf)
         seq_rf.append(wave_rf, wait=True)
 
-        #for N4
+        # for N4
         seq_rf.append(wave_rf, wait=True)
-            
-        for i,t in enumerate(self.tau):
-            t = t*self.sampling_rf/1e9
+
+        for i, t in enumerate(self.tau):
+            t = t * self.sampling_rf / 1e9
             mw_rf.duration = t
-            name_rf = 'NRABI_%03i' % i
-            #waves = IQWaveform(name, pulse_sequence, file_type=0) # 0 for wfm file and 1 for pat file
-            wave_rf = Waveform610(name_rf, pulse_sequence_rf, offset=0, file_type=0, sampling=self.sampling_rf)# 0 for wfm file and 1 for pat file
+            name_rf = "NRABI_%03i" % i
+            # waves = IQWaveform(name, pulse_sequence, file_type=0) # 0 for wfm file and 1 for pat file
+            wave_rf = Waveform610(
+                name_rf,
+                pulse_sequence_rf,
+                offset=0,
+                file_type=0,
+                sampling=self.sampling_rf,
+            )  # 0 for wfm file and 1 for pat file
             self.waves_rf.append(wave_rf)
-            seq_rf.append(wave_rf, wait=True) #for tomo 0
-            seq_rf.append(wave_rf, wait=True) #for tomo pi13
+            seq_rf.append(wave_rf, wait=True)  # for tomo 0
+            seq_rf.append(wave_rf, wait=True)  # for tomo pi13
 
             mw_rf_tomo_pi34.duration = t
-            name_rf_tomo_pi34 = 'NRABI_%03i_pi34' % i
-            #waves = IQWaveform(name, pulse_sequence, file_type=0) # 0 for wfm file and 1 for pat file
-            wave_rf_tomo_pi34 = Waveform610(name_rf_tomo_pi34, pulse_sequence_rf_tomo_pi34, offset=0, file_type=0, sampling=self.sampling_rf)# 0 for wfm file and 1 for pat file
+            name_rf_tomo_pi34 = "NRABI_%03i_pi34" % i
+            # waves = IQWaveform(name, pulse_sequence, file_type=0) # 0 for wfm file and 1 for pat file
+            wave_rf_tomo_pi34 = Waveform610(
+                name_rf_tomo_pi34,
+                pulse_sequence_rf_tomo_pi34,
+                offset=0,
+                file_type=0,
+                sampling=self.sampling_rf,
+            )  # 0 for wfm file and 1 for pat file
             self.waves_rf.append(wave_rf_tomo_pi34)
-            seq_rf.append(wave_rf_tomo_pi34, wait=True) #for tomo pi34
+            seq_rf.append(wave_rf_tomo_pi34, wait=True)  # for tomo pi34
 
-            
-            seq_rf.append(wave_rf, wait=True) #for tomo Pi
+            seq_rf.append(wave_rf, wait=True)  # for tomo Pi
 
-
-
-            
         self.waves_rf.append(seq_rf)
         self.main_wave_rf = seq_rf.name
-    
 
-    
     # Processing ########################
-    @on_trait_change('count_data, time_window_width, time_window_offset_signal, time_window_offset_normalize')
+    @on_trait_change(
+        "count_data, time_window_width, time_window_offset_signal, time_window_offset_normalize"
+    )
     def _analyze_count_data(self):
         y = self.count_data
         n = len(y)
-        
-        T =  self.time_window_width
+
+        T = self.time_window_width
         t0 = self.time_window_offset_signal
         t1 = self.time_window_offset_normalize
-        
+
         dt = float(self.bin_width)
-        
+
         if n == 0:
             return None
-        
+
         profile = y.sum(0)
-        
+
         z0 = np.empty((y.shape[0],))
         z1 = np.empty((y.shape[0],))
-        
+
         flank = fitting.find_edge(profile)
-        
+
         i0 = int(np.round((flank + t0) / dt))
         i1 = int(np.round((flank + t1) / dt))
-        I  = int(np.round(       T     / dt))
+        I = int(np.round(T / dt))
         for i, slot in enumerate(y):
-            z0[i] = slot[i0:i0+I].mean()
-            z1[i] = slot[i1:i1+I].mean()
-        
+            z0[i] = slot[i0 : i0 + I].mean()
+            z1[i] = slot[i1 : i1 + I].mean()
+
         self.flank = flank
         self.pulse_profile = profile
-        '''
+        """
         if self.dual:
             self.y2 = (z0 / z1)[n/2:]
             self.y1 = (z0 / z1)[:n/2]
         else:
             self.y1 = z0 / z1
-        '''
+        """
         y1 = z0 / z1
         self.y1 = y1[4::4]
         self.y2 = y1[:4]
-    
 
-
-    @on_trait_change('y1')
+    @on_trait_change("y1")
     def _update_line_plot_value(self):
         """override"""
         y = self.y1
         n = len(y)
-        old_index = self.line_plot_data.get_data('index')
+        old_index = self.line_plot_data.get_data("index")
         if old_index is not None and len(old_index) != n:
-            self.line_plot_data.set_data('index', np.arange(n))
-        self.line_plot_data.set_data('y1', y)
+            self.line_plot_data.set_data("index", np.arange(n))
+        self.line_plot_data.set_data("y1", y)
         if self.show_fit:
-            self.line_plot_data.set_data('fit', fitting.Cosinus(*self.fit_parameters)(self.tau))
-    
-    
-    @on_trait_change('show_fit')
+            self.line_plot_data.set_data(
+                "fit", fitting.Cosinus(*self.fit_parameters)(self.tau)
+            )
+
+    @on_trait_change("show_fit")
     def _plot_fit(self):
         plot = self.line_plot
         if self.show_fit == False:
             while len(plot.components) > 1:
                 plot.remove(plot.components[-1])
         else:
-            self.line_plot_data.set_data('fit', fitting.Cosinus(*self.fit_parameters)(self.tau))
-            plot.plot(('index', 'fit'), style='line', line_width=2, color=scheme['fit 1'])
+            self.line_plot_data.set_data(
+                "fit", fitting.Cosinus(*self.fit_parameters)(self.tau)
+            )
+            plot.plot(
+                ("index", "fit"), style="line", line_width=2, color=scheme["fit 1"]
+            )
         plot.request_redraw()
-    
-    
-    @on_trait_change('y1, show_fit')
+
+    @on_trait_change("y1, show_fit")
     def _update_fit_parameters(self):
         if self.y1 is None:
             return
         else:
-            y_offset=self.y1.mean()
-            
+            y_offset = self.y1.mean()
+
             x = self.tau
             y = self.y1 - y_offset
-            
+
             try:
-                #print(fitting.CosinusNoOffsetEstimator)
-                #amp, period, phi = fitting.fit(x, y, fitting.CosinusNoOffset, fitting.CosinusNoOffsetEstimator)
+                # print(fitting.CosinusNoOffsetEstimator)
+                # amp, period, phi = fitting.fit(x, y, fitting.CosinusNoOffset, fitting.CosinusNoOffsetEstimator)
                 fit_result = fitting.fit_rabi_phase(x, y, np.sqrt(self.y1))
                 p, v, q, chisqr = fit_result
                 amp, period, phi = p
             except:
                 return
-            '''
+            """
             if amp < 0:
                 amp = -amp
                 try:
@@ -469,137 +607,335 @@ class NuclearRabi_smiq_Nnorm( Pulsed ):
             except:
                 return
             
-            '''
-            
+            """
+
             self.fit_parameters = (amp, period, y_offset + phi)
-            self.rabi_period    = period
+            self.rabi_period = period
             self.rabi_frequency = 1000.0 / period
-            self.rabi_contrast  = 200 * amp / y_offset
-            self.rabi_offset    = phi
-            self.pi2            = 0.25 * period + phi
-            self.pi             = 0.5  * period + phi
-            self.pi32           = 0.75 * period + phi
-    
-    
+            self.rabi_contrast = 200 * amp / y_offset
+            self.rabi_offset = phi
+            self.pi2 = 0.25 * period + phi
+            self.pi = 0.5 * period + phi
+            self.pi32 = 0.75 * period + phi
+
     traits_view = View(
         VGroup(
             HGroup(
-                Item('submit_button',   show_label=False),
-                Item('remove_button',   show_label=False),
-                Item('resubmit_button', show_label=False),
-                Item('priority'),
-                Item('state', style='readonly'),
-                Item('run_time', style='readonly', format_str='%i'),
-                Item('stop_time'),
+                Item("submit_button", show_label=False),
+                Item("remove_button", show_label=False),
+                Item("resubmit_button", show_label=False),
+                Item("priority"),
+                Item("state", style="readonly"),
+                Item("run_time", style="readonly", format_str="%i"),
+                Item("stop_time"),
             ),
             Tabbed(
                 VGroup(
                     HGroup(
                         HGroup(
-                            Item('frequency', editor=TextEditor(auto_set=False, enter_set=True, evaluate=float, format_func=lambda x:'%e'%x), width=-80),
-                            Item('power', width=-40),
-                            Item('mw_pi', editor=TextEditor(auto_set=False, enter_set=True, evaluate=float, format_func=lambda x:'%.2f'%x), width=-80),
-                            Item('splitting', editor=TextEditor(auto_set=False, enter_set=True, evaluate=float, format_func=lambda x:'%e'%x), width=-80),
-                            Item('frequency2', style='readonly', editor=TextEditor(auto_set=False, enter_set=True, evaluate=float, format_func=lambda x:' %.6f GHz' % (x*1e-9))),
-                            Item('power2', width=-40),
-                            Item('mw_pi_2', editor=TextEditor(auto_set=False, enter_set=True, evaluate=float, format_func=lambda x:'%.2f'%x), width=-80),
-                            label='SMIQ',
+                            Item(
+                                "frequency",
+                                editor=TextEditor(
+                                    auto_set=False,
+                                    enter_set=True,
+                                    evaluate=float,
+                                    format_func=lambda x: "%e" % x,
+                                ),
+                                width=-80,
+                            ),
+                            Item("power", width=-40),
+                            Item(
+                                "mw_pi",
+                                editor=TextEditor(
+                                    auto_set=False,
+                                    enter_set=True,
+                                    evaluate=float,
+                                    format_func=lambda x: "%.2f" % x,
+                                ),
+                                width=-80,
+                            ),
+                            Item(
+                                "splitting",
+                                editor=TextEditor(
+                                    auto_set=False,
+                                    enter_set=True,
+                                    evaluate=float,
+                                    format_func=lambda x: "%e" % x,
+                                ),
+                                width=-80,
+                            ),
+                            Item(
+                                "frequency2",
+                                style="readonly",
+                                editor=TextEditor(
+                                    auto_set=False,
+                                    enter_set=True,
+                                    evaluate=float,
+                                    format_func=lambda x: " %.6f GHz" % (x * 1e-9),
+                                ),
+                            ),
+                            Item("power2", width=-40),
+                            Item(
+                                "mw_pi_2",
+                                editor=TextEditor(
+                                    auto_set=False,
+                                    enter_set=True,
+                                    evaluate=float,
+                                    format_func=lambda x: "%.2f" % x,
+                                ),
+                                width=-80,
+                            ),
+                            label="SMIQ",
                             show_border=True,
                         ),
                         HGroup(
-                            Item('reload_awg_rf'),
-                            Item('wfm_button_rf', show_label=False),
-                            Item('upload_progress_rf', style='readonly', format_str='%i'),
-                            Item('main_dir_rf', style='readonly'),
-                            label='AWG',
+                            Item("reload_awg_rf"),
+                            Item("wfm_button_rf", show_label=False),
+                            Item(
+                                "upload_progress_rf", style="readonly", format_str="%i"
+                            ),
+                            Item("main_dir_rf", style="readonly"),
+                            label="AWG",
                             show_border=True,
                         ),
                     ),
                     HGroup(
-                        #Item('freq_tot', style='readonly', editor=TextEditor(auto_set=False, enter_set=True, evaluate=float, format_func=lambda x:' %.4f GHz' % (x*1e-9))),
-                        Item('freq_awg_rf', editor=TextEditor(auto_set=False, enter_set=True, evaluate=float, format_func=lambda x:'%e'%x), width=-80),
-                        Item('phase_sin_rf', editor=TextEditor(auto_set=False, enter_set=True, evaluate=float, format_func=lambda x:'%.2f'%x), width=-80),
-                        Item('amp1_rf', editor=TextEditor(auto_set=False, enter_set=True, evaluate=float, format_func=lambda x:'%.2f'%x), width=-80),
-                        Item('mw_pi_rf', editor=TextEditor(auto_set=False, enter_set=True, evaluate=float, format_func=lambda x:'%.2f'%x), width=-80),
-                        Item('start_time', editor=TextEditor(auto_set=False, enter_set=True, evaluate=float, format_func=lambda x:'%e'%x), width=-80),
-                        Item('end_time', editor=TextEditor(auto_set=False, enter_set=True, evaluate=float, format_func=lambda x:'%e'%x), width=-80),
-                        Item('time_step', editor=TextEditor(auto_set=False, enter_set=True, evaluate=float, format_func=lambda x:'%e'%x), width=-80),
-                        label='Waveform_rf',
+                        # Item('freq_tot', style='readonly', editor=TextEditor(auto_set=False, enter_set=True, evaluate=float, format_func=lambda x:' %.4f GHz' % (x*1e-9))),
+                        Item(
+                            "freq_awg_rf",
+                            editor=TextEditor(
+                                auto_set=False,
+                                enter_set=True,
+                                evaluate=float,
+                                format_func=lambda x: "%e" % x,
+                            ),
+                            width=-80,
+                        ),
+                        Item(
+                            "phase_sin_rf",
+                            editor=TextEditor(
+                                auto_set=False,
+                                enter_set=True,
+                                evaluate=float,
+                                format_func=lambda x: "%.2f" % x,
+                            ),
+                            width=-80,
+                        ),
+                        Item(
+                            "amp1_rf",
+                            editor=TextEditor(
+                                auto_set=False,
+                                enter_set=True,
+                                evaluate=float,
+                                format_func=lambda x: "%.2f" % x,
+                            ),
+                            width=-80,
+                        ),
+                        Item(
+                            "mw_pi_rf",
+                            editor=TextEditor(
+                                auto_set=False,
+                                enter_set=True,
+                                evaluate=float,
+                                format_func=lambda x: "%.2f" % x,
+                            ),
+                            width=-80,
+                        ),
+                        Item(
+                            "start_time",
+                            editor=TextEditor(
+                                auto_set=False,
+                                enter_set=True,
+                                evaluate=float,
+                                format_func=lambda x: "%e" % x,
+                            ),
+                            width=-80,
+                        ),
+                        Item(
+                            "end_time",
+                            editor=TextEditor(
+                                auto_set=False,
+                                enter_set=True,
+                                evaluate=float,
+                                format_func=lambda x: "%e" % x,
+                            ),
+                            width=-80,
+                        ),
+                        Item(
+                            "time_step",
+                            editor=TextEditor(
+                                auto_set=False,
+                                enter_set=True,
+                                evaluate=float,
+                                format_func=lambda x: "%e" % x,
+                            ),
+                            width=-80,
+                        ),
+                        label="Waveform_rf",
                         show_border=True,
                     ),
                     HGroup(
-                        Item('show_fit'),
-                        Item('rabi_contrast', style='readonly', editor=TextEditor(auto_set=False, enter_set=True, evaluate=float, format_func=lambda x:' %.1f% %'%x)),
-                        Item('rabi_frequency', style='readonly', editor=TextEditor(auto_set=False, enter_set=True, evaluate=float, format_func=lambda x:' %.2f MHz'%x)),
-                        Item('rabi_period', style='readonly', editor=TextEditor(auto_set=False, enter_set=True, evaluate=float, format_func=lambda x:' %.2f ns'%x)),
-                        Item('rabi_offset', style='readonly', editor=TextEditor(auto_set=False, enter_set=True, evaluate=float, format_func=lambda x:' %.2f ns'%x)),
-                        Item('pi2', style='readonly', editor=TextEditor(auto_set=False, enter_set=True, evaluate=float, format_func=lambda x:' %.2f ns'%x)),
-                        Item('pi', style='readonly', editor=TextEditor(auto_set=False, enter_set=True, evaluate=float, format_func=lambda x:' %.2f ns'%x)),
-                        Item('pi32', style='readonly', editor=TextEditor(auto_set=False, enter_set=True, evaluate=float, format_func=lambda x:' %.2f ns'%x)),
-                        label='Fit',
+                        Item("show_fit"),
+                        Item(
+                            "rabi_contrast",
+                            style="readonly",
+                            editor=TextEditor(
+                                auto_set=False,
+                                enter_set=True,
+                                evaluate=float,
+                                format_func=lambda x: " %.1f% %" % x,
+                            ),
+                        ),
+                        Item(
+                            "rabi_frequency",
+                            style="readonly",
+                            editor=TextEditor(
+                                auto_set=False,
+                                enter_set=True,
+                                evaluate=float,
+                                format_func=lambda x: " %.2f MHz" % x,
+                            ),
+                        ),
+                        Item(
+                            "rabi_period",
+                            style="readonly",
+                            editor=TextEditor(
+                                auto_set=False,
+                                enter_set=True,
+                                evaluate=float,
+                                format_func=lambda x: " %.2f ns" % x,
+                            ),
+                        ),
+                        Item(
+                            "rabi_offset",
+                            style="readonly",
+                            editor=TextEditor(
+                                auto_set=False,
+                                enter_set=True,
+                                evaluate=float,
+                                format_func=lambda x: " %.2f ns" % x,
+                            ),
+                        ),
+                        Item(
+                            "pi2",
+                            style="readonly",
+                            editor=TextEditor(
+                                auto_set=False,
+                                enter_set=True,
+                                evaluate=float,
+                                format_func=lambda x: " %.2f ns" % x,
+                            ),
+                        ),
+                        Item(
+                            "pi",
+                            style="readonly",
+                            editor=TextEditor(
+                                auto_set=False,
+                                enter_set=True,
+                                evaluate=float,
+                                format_func=lambda x: " %.2f ns" % x,
+                            ),
+                        ),
+                        Item(
+                            "pi32",
+                            style="readonly",
+                            editor=TextEditor(
+                                auto_set=False,
+                                enter_set=True,
+                                evaluate=float,
+                                format_func=lambda x: " %.2f ns" % x,
+                            ),
+                        ),
+                        label="Fit",
                         show_border=True,
                     ),
                     VGroup(
-                        Item('line_plot', editor=ComponentEditor(), show_label=False, width=500, height=300, resizable=True),
+                        Item(
+                            "line_plot",
+                            editor=ComponentEditor(),
+                            show_label=False,
+                            width=500,
+                            height=300,
+                            resizable=True,
+                        ),
                         HGroup(
-                            Item('fft_plot', editor=ComponentEditor(), show_label=False, width=500, height=300, resizable=True),
-                            Item('matrix_plot', editor=ComponentEditor(), show_label=False, width=500, height=300, resizable=True),                    
-                        )
+                            Item(
+                                "fft_plot",
+                                editor=ComponentEditor(),
+                                show_label=False,
+                                width=500,
+                                height=300,
+                                resizable=True,
+                            ),
+                            Item(
+                                "matrix_plot",
+                                editor=ComponentEditor(),
+                                show_label=False,
+                                width=500,
+                                height=300,
+                                resizable=True,
+                            ),
+                        ),
                     ),
-                    label = 'data',
+                    label="data",
                 ),
                 VGroup(
                     HGroup(
                         HGroup(
-                            Item('laser', width=-50),
-                            Item('wait', width=-50),
-                            label='Sequence',
+                            Item("laser", width=-50),
+                            Item("wait", width=-50),
+                            label="Sequence",
                             show_border=True,
                         ),
                     ),
                     HGroup(
                         HGroup(
-                            Item('vpp_rf', width=-50),
-                            Item('sampling_rf', width=-80),
-                            Item('trig_interval_rf', width=-80),
-                            Item('trig_delay_rf', width=-80),
-                            label='AWG_rf',
+                            Item("vpp_rf", width=-50),
+                            Item("sampling_rf", width=-80),
+                            Item("trig_interval_rf", width=-80),
+                            Item("trig_delay_rf", width=-80),
+                            label="AWG_rf",
                             show_border=True,
                         ),
                     ),
                     HGroup(
-                        Item('record_length'),
-                        Item('bin_width'),
-                        Item('time_window_width'),
-                        Item('time_window_offset_signal'),
-                        Item('time_window_offset_normalize'),
-                        Item('dual', enabled_when='state != "run"'),
-                        label='Analysis',
+                        Item("record_length"),
+                        Item("bin_width"),
+                        Item("time_window_width"),
+                        Item("time_window_offset_signal"),
+                        Item("time_window_offset_normalize"),
+                        Item("dual", enabled_when='state != "run"'),
+                        label="Analysis",
                         show_border=True,
                     ),
-                    Item('pulse_plot', editor=ComponentEditor(), show_label=False, width=500, height=300, resizable=True),
-                    label = 'settings',
+                    Item(
+                        "pulse_plot",
+                        editor=ComponentEditor(),
+                        show_label=False,
+                        width=500,
+                        height=300,
+                        resizable=True,
+                    ),
+                    label="settings",
                 ),
             ),
         ),
-        title='NuclearRabi 2 smiq and awg610 tomo method',
+        title="NuclearRabi 2 smiq and awg610 tomo method",
         buttons=[],
         resizable=True,
-        width =1400,
+        width=1400,
         height=800,
         handler=PulsedToolHandler,
         menubar=MenuBar(
             Menu(
-                Action(action='load', name='Load'),
-                Action(action='save', name='Save (.pyd or .pys)'),
-                Action(action='saveLinePlot', name='SaveLinePlot (.png)'),
-                Action(action='saveMatrixPlot', name='SaveMatrixPlot (.png)'),
-                Action(action='saveColorPlot', name='SavePlot (.png)'),
-                Action(action='saveAll', name='Save All (.png+.pys)'),
-                Action(action='_on_close', name='Quit'),
-                name='File',
+                Action(action="load", name="Load"),
+                Action(action="save", name="Save (.pyd or .pys)"),
+                Action(action="saveLinePlot", name="SaveLinePlot (.png)"),
+                Action(action="saveMatrixPlot", name="SaveMatrixPlot (.png)"),
+                Action(action="saveColorPlot", name="SavePlot (.png)"),
+                Action(action="saveAll", name="Save All (.png+.pys)"),
+                Action(action="_on_close", name="Quit"),
+                name="File",
             ),
         ),
     )
-    
- 

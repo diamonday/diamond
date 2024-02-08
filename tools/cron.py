@@ -10,32 +10,45 @@ http://stackoverflow.com/questions/373335/suggestions-for-a-cron-like-scheduler-
 import threading
 import logging
 
-import time
 from datetime import datetime, timedelta
 
 from tools.utility import Singleton, StoppableThread, timestamp
 
+
 # Some utility classes / functions first
 class AllMatch(set):
     """Universal set - match everything"""
-    def __contains__(self, item): return True
+
+    def __contains__(self, item):
+        return True
+
 
 allMatch = AllMatch()
 
+
 def conv_to_set(obj):  # Allow single integer to be provided
-    if isinstance(obj, (int,long)):
+    if isinstance(obj, int):
         return set([obj])  # Single item
     if not isinstance(obj, set):
         obj = set(obj)
     return obj
 
+
 # The actual Event class
 class CronEvent(object):
-    def __init__(self, action, min=allMatch, hour=allMatch, 
-                       day=allMatch, month=allMatch, dow=allMatch, 
-                       args=(), kwargs={}):
+    def __init__(
+        self,
+        action,
+        min=allMatch,
+        hour=allMatch,
+        day=allMatch,
+        month=allMatch,
+        dow=allMatch,
+        args=(),
+        kwargs={},
+    ):
         self.mins = conv_to_set(min)
-        self.hours= conv_to_set(hour)
+        self.hours = conv_to_set(hour)
         self.days = conv_to_set(day)
         self.months = conv_to_set(month)
         self.dow = conv_to_set(dow)
@@ -45,27 +58,36 @@ class CronEvent(object):
 
     def matchtime(self, t):
         """Return True if this event should trigger at the specified datetime"""
-        return ((t.minute     in self.mins) and
-                (t.hour       in self.hours) and
-                (t.day        in self.days) and
-                (t.month      in self.months) and
-                (t.weekday()  in self.dow))
+        return (
+            (t.minute in self.mins)
+            and (t.hour in self.hours)
+            and (t.day in self.days)
+            and (t.month in self.months)
+            and (t.weekday() in self.dow)
+        )
 
     def check(self, t):
         if self.matchtime(t):
-            logging.getLogger().info('Time match at cron event '+str(self)+' at time '+str(t)+'. Executing '+str(self.action)+'.')
+            logging.getLogger().info(
+                "Time match at cron event "
+                + str(self)
+                + " at time "
+                + str(t)
+                + ". Executing "
+                + str(self.action)
+                + "."
+            )
             self.action(*self.args, **self.kwargs)
 
     def __repr__(self):
-        return 'Cron Event on callable '+str(self.action)
+        return "Cron Event on callable " + str(self.action)
 
-class CronDaemon( ):
-    __metaclass__ = Singleton
-    
+
+class CronDaemon(metaclass=Singleton):
     def __init__(self, *events):
         self.events = list(events)
         self.lock = threading.Lock()
-        self.thread = StoppableThread() # the thread the manager loop is running in
+        self.thread = StoppableThread()  # the thread the manager loop is running in
 
     def register(self, event):
         self.lock.acquire()
@@ -85,47 +107,56 @@ class CronDaemon( ):
         """Start the process loop in a thread."""
         if self.thread.is_alive():
             return
-        self.thread = StoppableThread(target = self.run, name=self.__class__.__name__ + timestamp())
+        self.thread = StoppableThread(
+            target=self.run, name=self.__class__.__name__ + timestamp()
+        )
         self.thread.start()
- 
+
     def stop(self, timeout=None):
         """Stop the process loop."""
         self.thread.stop(timeout=timeout)
- 
+
     def run(self):
-        logging.getLogger().info('Starting Cron Daemon.')
-        t=datetime(*datetime.now().timetuple()[:5])
+        logging.getLogger().info("Starting Cron Daemon.")
+        t = datetime(*datetime.now().timetuple()[:5])
         while 1:
-            
+
             self.lock.acquire()
             try:
-                logging.getLogger().log(5,'Checking events at '+str(datetime.now())+' with '+str(t)+'.')
+                logging.getLogger().log(
+                    5,
+                    "Checking events at "
+                    + str(datetime.now())
+                    + " with "
+                    + str(t)
+                    + ".",
+                )
                 for e in self.events:
                     e.check(t)
             finally:
                 self.lock.release()
-            
+
             t += timedelta(minutes=1)
             while datetime.now() < t:
                 delta = (t - datetime.now()).total_seconds()
                 self.thread.stop_request.wait(delta)
                 if self.thread.stop_request.isSet():
                     return
-        logging.getLogger().info('Shutting down Cron Daemon.')
+        logging.getLogger().info("Shutting down Cron Daemon.")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
 
     logging.getLogger().addHandler(logging.StreamHandler())
     logging.getLogger().setLevel(logging.DEBUG)
-    logging.getLogger().info('Starting logger.')
+    logging.getLogger().info("Starting logger.")
 
     def act():
-        print 'a'
+        print("a")
 
     def bct():
-        print 'b'
+        print("b")
 
     CronDaemon().start()
-    CronDaemon().register( CronEvent(act, min=range(60)) )
-    CronDaemon().register( CronEvent(bct, min=range(0,60,2)) )
-    
+    CronDaemon().register(CronEvent(act, min=list(range(60))))
+    CronDaemon().register(CronEvent(bct, min=list(range(0, 60, 2))))

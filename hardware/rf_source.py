@@ -20,13 +20,15 @@ Copyright (C) 2009-2011 Helmut Fedder <helmut.fedder@gmail.com>
 import visa
 import numpy
 
-class AWG520():
+
+class AWG520:
     """Provides control of AWG520 with GPIB via visa."""
+
     _output_threshold = 0.001
-    
-    def __init__(self, visa_address='GPIB0::14'):
+
+    def __init__(self, visa_address="GPIB0::14"):
         self.visa_address = visa_address
-        
+
     def _write(self, string):
         try:  # if the connection is already open, this will work
             self.instr.write(string)
@@ -37,7 +39,7 @@ class AWG520():
                 pass
             self.instr = visa.instrument(self.visa_address)
             self.instr.write(string)
-        
+
     def _ask(self, str):
         try:
             val = self.instr.ask(str)
@@ -47,72 +49,73 @@ class AWG520():
         return val
 
     def onStatus(self):
-        return float(self._ask('AWGC:RST?'))
-    
+        return float(self._ask("AWGC:RST?"))
+
     def getPower(self):
-        return float(self._ask('AWGC:FG1:VOLT?'))
+        return float(self._ask("AWGC:FG1:VOLT?"))
 
     def setPower(self, power):
         if power is None or power < self._output_threshold:
-            self._write('AWGC:STOP')
-            self._write('OUTP1:STAT OFF')
-            self._write('OUTP2:STAT OFF')
+            self._write("AWGC:STOP")
+            self._write("OUTP1:STAT OFF")
+            self._write("OUTP2:STAT OFF")
             return
         if self.getPower() != power:
-            self._write('AWGC:FG1:VOLT %f' % float(power))
-            self._write('AWGC:FG2:VOLT %f' % float(power))
+            self._write("AWGC:FG1:VOLT %f" % float(power))
+            self._write("AWGC:FG2:VOLT %f" % float(power))
         if self.onStatus() == 0:
-            self._write('AWGC:RUN')
-            self._write('OUTP1:STAT ON')
-            self._write('OUTP2:STAT ON')
+            self._write("AWGC:RUN")
+            self._write("OUTP1:STAT ON")
+            self._write("OUTP2:STAT ON")
 
     def getFrequency(self):
-        return float(self._ask('AWGC:FG:FREQ?'))
+        return float(self._ask("AWGC:FG:FREQ?"))
 
     def setFrequency(self, frequency):
         if self.getFrequency() != frequency:
-            self._write('AWGC:FG:FREQ?')
-            self._write('AWGC:FG:FREQ %e MHz' % (frequency / 1.0e6))
-            
+            self._write("AWGC:FG:FREQ?")
+            self._write("AWGC:FG:FREQ %e MHz" % (frequency / 1.0e6))
+
     def setOutput(self, power, frequency):
-        self._write('AWGC:FG1:FUNC SIN')
-        self._write('AWGC:FG2:FUNC SIN')
+        self._write("AWGC:FG1:FUNC SIN")
+        self._write("AWGC:FG2:FUNC SIN")
         self.setPower(power)
         self.setFrequency(frequency)
-    
+
     def setPhase(self, phase):
-        self._write('AWGC:FG2:PHAS %f DEG' % phase)
-        
+        self._write("AWGC:FG2:PHAS %f DEG" % phase)
+
     def setMode(self):
-        self._write('AWGC:FG ON')
-        self._write('AWGC:FG1:FUNC SIN')
-        self._write('AWGC:FG2:FUNC SIN')
-        self._write('AWGC:RMOD CONT')
-        self._write('AWGC:RUN')
-        self._write('AWGC:FG1:PHAS 0DEG')
-        self._write('AWGC:FG2:PHAS 0DEG')
-        self._write('OUTP1:STAT ON')
-        self._write('OUTP2:STAT ON')
+        self._write("AWGC:FG ON")
+        self._write("AWGC:FG1:FUNC SIN")
+        self._write("AWGC:FG2:FUNC SIN")
+        self._write("AWGC:RMOD CONT")
+        self._write("AWGC:RUN")
+        self._write("AWGC:FG1:PHAS 0DEG")
+        self._write("AWGC:FG2:PHAS 0DEG")
+        self._write("OUTP1:STAT ON")
+        self._write("OUTP2:STAT ON")
 
 
-class SMIQ_RF():
+class SMIQ_RF:
     """Provides control of SMIQ family RF sources from Rhode und Schwarz with GPIB via visa."""
+
     _output_threshold = -90.0
-    
-    def __init__(self, visa_address='GPIB0::28'):
+
+    def __init__(self, visa_address="GPIB0::28"):
         self.visa_address = visa_address
-        
+
     def _write(self, string):
-        try: # if the connection is already open, this will work
+        try:  # if the connection is already open, this will work
             self.instr.write(string)
-        except: # else we attempt to open the connection and try again
-            try: # silently ignore possible exceptions raised by del
+        except:  # else we attempt to open the connection and try again
+            try:  # silently ignore possible exceptions raised by del
                 del self.instr
             except Exception:
                 pass
             self.instr = visa.instrument(self.visa_address)
             self.instr.write(string)
-        
+
     def _ask(self, str):
         try:
             val = self.instr.ask(str)
@@ -122,95 +125,99 @@ class SMIQ_RF():
         return val
 
     def onStatus(self):
-        return float(self._ask(':OUTP?'))
-    
+        return float(self._ask(":OUTP?"))
+
     def getPower(self):
-        return float(self._ask(':POW?'))
+        return float(self._ask(":POW?"))
 
     def setPower(self, power):
         if power is None or power < self._output_threshold:
-            #logging.getLogger().debug('SMIQ at '+str(self.visa_address)+' turning off.')
-            self._write(':FREQ:MODE CW')
-            self._write(':OUTP OFF')
+            # logging.getLogger().debug('SMIQ at '+str(self.visa_address)+' turning off.')
+            self._write(":FREQ:MODE CW")
+            self._write(":OUTP OFF")
             return
-        if self.getPower()!=power:
-            self._write(':FREQ:MODE CW')
-            self._write(':POW %f' % float(power))
-        if self.onStatus()==0:
-            self._write(':OUTP ON')
+        if self.getPower() != power:
+            self._write(":FREQ:MODE CW")
+            self._write(":POW %f" % float(power))
+        if self.onStatus() == 0:
+            self._write(":OUTP ON")
 
     def getFrequency(self):
-        return float(self._ask(':FREQ?'))
+        return float(self._ask(":FREQ?"))
 
     def setFrequency(self, frequency):
-        if self.getFrequency()!=frequency:
-            self._write(':FREQ:MODE CW')
-            self._write(':FREQ %e' % frequency)
-            
+        if self.getFrequency() != frequency:
+            self._write(":FREQ:MODE CW")
+            self._write(":FREQ %e" % frequency)
+
     def setOutput(self, power, frequency):
         self.setPower(power)
         self.setFrequency(frequency)
-    
+
     def setMode(self):
         pass
 
     def initSweep(self, frequency, power):
         if len(frequency) != len(power):
-            raise ValueError('Length mismatch between list of frequencies and list of powers.')
-        self._write(':FREQ:MODE CW')
-        self._write(':LIST:DEL:ALL')
-        self._write('*WAI')
+            raise ValueError(
+                "Length mismatch between list of frequencies and list of powers."
+            )
+        self._write(":FREQ:MODE CW")
+        self._write(":LIST:DEL:ALL")
+        self._write("*WAI")
         self._write(":LIST:SEL 'ODMR'")
-        FreqString = ''
+        FreqString = ""
         for f in frequency[:-1]:
-            FreqString += ' %f,' % f
-        FreqString += ' %f' % frequency[-1]
-        self._write(':LIST:FREQ' + FreqString)
-        self._write('*WAI')
-        PowerString = ''
+            FreqString += " %f," % f
+        FreqString += " %f" % frequency[-1]
+        self._write(":LIST:FREQ" + FreqString)
+        self._write("*WAI")
+        PowerString = ""
         for p in power[:-1]:
-            PowerString += ' %f,' % p
-        PowerString += ' %f' % power[-1]
-        self._write(':LIST:POW' + PowerString)
-        self._write(':LIST:LEAR')
-        self._write(':TRIG1:LIST:SOUR EXT')
+            PowerString += " %f," % p
+        PowerString += " %f" % power[-1]
+        self._write(":LIST:POW" + PowerString)
+        self._write(":LIST:LEAR")
+        self._write(":TRIG1:LIST:SOUR EXT")
         # we switch frequency on negative edge. Thus, the first square pulse of the train
         # is first used for gated count and then the frequency is increased. In this way
-        # the first frequency in the list will correspond exactly to the first acquired count. 
-        self._write(':TRIG1:SLOP NEG') 
-        self._write(':LIST:MODE STEP')
-        self._write(':FREQ:MODE LIST')
-        self._write('*WAI')
-        N = int(numpy.round(float(self._ask(':LIST:FREQ:POIN?'))))
+        # the first frequency in the list will correspond exactly to the first acquired count.
+        self._write(":TRIG1:SLOP NEG")
+        self._write(":LIST:MODE STEP")
+        self._write(":FREQ:MODE LIST")
+        self._write("*WAI")
+        N = int(numpy.round(float(self._ask(":LIST:FREQ:POIN?"))))
         if N != len(frequency):
-            raise RuntimeError, 'Error in SMIQ with List Mode'
+            raise RuntimeError("Error in SMIQ with List Mode")
 
     def resetListPos(self):
-        self._write(':ABOR:LIST')
-        self._write('*WAI')
+        self._write(":ABOR:LIST")
+        self._write("*WAI")
 
-class HP33120A():
+
+class HP33120A:
     """Provides control of HP33120A with GPIB via visa."""
+
     _output_threshold = -22.0
-    
-    def __init__(self, visa_address='GPIB0::11'):
+
+    def __init__(self, visa_address="GPIB0::11"):
         self.visa_address = visa_address
-        self._write('FUNC:SHAP SIN')
-        #self._write('TRIG:SOUR EXT')
-        #self._write('BM:SOUR EXT')
-        #self._write('BM:STAT ON')
-        
+        self._write("FUNC:SHAP SIN")
+        # self._write('TRIG:SOUR EXT')
+        # self._write('BM:SOUR EXT')
+        # self._write('BM:STAT ON')
+
     def _write(self, string):
-        try: # if the connection is already open, this will work
+        try:  # if the connection is already open, this will work
             self.instr.write(string)
-        except: # else we attempt to open the connection and try again
-            try: # silently ignore possible exceptions raised by del
+        except:  # else we attempt to open the connection and try again
+            try:  # silently ignore possible exceptions raised by del
                 del self.instr
             except Exception:
                 pass
             self.instr = visa.instrument(self.visa_address)
             self.instr.write(string)
-        
+
     def _ask(self, str):
         try:
             val = self.instr.ask(str)
@@ -220,225 +227,235 @@ class HP33120A():
         return val
 
     def setMode(self):
-        #self._write('TRIG:SOUR EXT')
-        #self._write('BM:SOUR EXT')
-        #self._write('BM:STAT ON')
+        # self._write('TRIG:SOUR EXT')
+        # self._write('BM:SOUR EXT')
+        # self._write('BM:STAT ON')
         pass
-        
+
     def getPower(self):
-        self._write('VOLT:UNIT DBM')
-        return float(self._ask('VOLT?'))
+        self._write("VOLT:UNIT DBM")
+        return float(self._ask("VOLT?"))
 
     def setPower(self, power):
         if power is None or power < self._output_threshold:
-            self._write('VOLT -22.0 DBM')
+            self._write("VOLT -22.0 DBM")
             return
-        #self._write('FUNC:SHAP SIN')
-        if abs(self.getPower()-power)>0.1: 
-            self._write('VOLT %f DBM' % float(power))
+        # self._write('FUNC:SHAP SIN')
+        if abs(self.getPower() - power) > 0.1:
+            self._write("VOLT %f DBM" % float(power))
 
     def getFrequency(self):
-        return float(self._ask('FREQ?'))
+        return float(self._ask("FREQ?"))
 
     def setFrequency(self, frequency):
-        #self._write('FUNC:SHAP SIN')
-        if self.getFrequency()!=frequency:  
-            self._write('FREQ %e HZ' % frequency)
+        # self._write('FUNC:SHAP SIN')
+        if self.getFrequency() != frequency:
+            self._write("FREQ %e HZ" % frequency)
 
     def setOutput(self, power, frequency):
         if power is None or power < self._output_threshold:
             power = self._output_threshold
-        if abs(self.getPower()-power)>0.1: 
-            self._write('VOLT %f DBM' % float(power))
-        if self.getFrequency()!=frequency:    
-            self._write('FREQ %e HZ' % frequency)
+        if abs(self.getPower() - power) > 0.1:
+            self._write("VOLT %f DBM" % float(power))
+        if self.getFrequency() != frequency:
+            self._write("FREQ %e HZ" % frequency)
         """#self._write('TRIG:SOUR EXT')
         #self._write('BM:SOUR EXT')
         #self._write('BM:STAT ON')
         self._write('APPL:SIN %e HZ, %f DBM' % (frequency, float(power)))
         """
-    def Off(self):
-        self._write('VOLT -22.0 DBM')
-        return self._ask('VOLT?')
 
-class Rigol1022():
+    def Off(self):
+        self._write("VOLT -22.0 DBM")
+        return self._ask("VOLT?")
+
+
+class Rigol1022:
     """Provides control of Rigol DG1022 function generator with USB via visa."""
+
     _output_threshold = -90
 
-    def __init__(self, visa_address='Rigol1022'): #visa_address='USB0::0x1AB1::0x0588::DG1D121801379::INSTR'
+    def __init__(
+        self, visa_address="Rigol1022"
+    ):  # visa_address='USB0::0x1AB1::0x0588::DG1D121801379::INSTR'
         self.visa_address = visa_address
-        
+
     def _write(self, string):
-        try: # if the connection is already open, this will work
+        try:  # if the connection is already open, this will work
             self.instr.write(string)
-        except Exception, e: # else we attempt to open the connection and try again
-            print 'Rigol1022 write:', e
-            try: # silently ignore possible exceptions raised by del
+        except Exception as e:  # else we attempt to open the connection and try again
+            print(("Rigol1022 write:", e))
+            try:  # silently ignore possible exceptions raised by del
                 del self.instr
             except Exception:
                 pass
             self.instr = visa.instrument(self.visa_address, delay=0.04)
             self.instr.write(string)
-        
+
     def _ask(self, s):
         try:
             val = self.instr.ask(s)
-        except Exception, e:
-            print 'Rigol1022 read:', e
+        except Exception as e:
+            print(("Rigol1022 read:", e))
             self.instr = visa.instrument(self.visa_address, delay=0.04)
             val = self.instr.ask(s)
         return val
-        
+
     def On(self):
-        self._write('OUTP ON')
-        return self._ask('OUTP?')
+        self._write("OUTP ON")
+        return self._ask("OUTP?")
 
     def Off(self):
-        self._write('OUTP OFF')
-        return self._ask('OUTP?')
+        self._write("OUTP OFF")
+        return self._ask("OUTP?")
 
     def _voltToPower(self, u):
         """
         Converts p-p voltage to dBm assuming 50 Ohm load.
-        
+
         dBm = 20 log10( U / U_0 2**0.5 )
-        
+
         where U_0 = sqrt(50 * 10^-3) * 2**0.5  = 0.31622776601683794
         """
         return 20 * numpy.log10(u / 0.31622776601683794)
-        
+
     def _powerToVolt(self, p):
         """
         Converts power in dBm to p-p Volt assuming 50 Ohm load.
-        
+
         U = U_0 10^(dBm / 20)
         """
-        return .1 ** 0.5 * 10 ** (p / 20.)
+        return 0.1**0.5 * 10 ** (p / 20.0)
 
     def getPower(self):
-        return self._voltToPower(float(self._ask('VOLT?').split(':')[1]))
+        return self._voltToPower(float(self._ask("VOLT?").split(":")[1]))
 
     def setPower(self, power):
         if power is None or power < self._output_threshold:
-            self._write('OUTP OFF')
+            self._write("OUTP OFF")
             return
-        self._write('VOLT %f' % self._powerToVolt(power))
-        self._write('OUTP ON')
- 
+        self._write("VOLT %f" % self._powerToVolt(power))
+        self._write("OUTP ON")
+
     def getFrequency(self):
-        return float(self._ask('FREQ?').split(':')[1])
+        return float(self._ask("FREQ?").split(":")[1])
 
     def setFrequency(self, frequency):
-        self._write('FREQ %e' % frequency)
+        self._write("FREQ %e" % frequency)
 
     def setOutput(self, power, frequency):
         self.setPower(power)
         self.setFrequency(frequency)
-        s = self._ask('FUNC?')
-        if s != 'CH1:SIN':
-            self._write('FUNC SIN')
+        s = self._ask("FUNC?")
+        if s != "CH1:SIN":
+            self._write("FUNC SIN")
 
-class Rigol822():
+
+class Rigol822:
     """Provides control of Rigol DG822 function generator with USB via visa."""
-    _output_threshold = -90 #not sure, if 1 mVpp, should be -50
 
-    def __init__(self, visa_address='USB0::0x1AB1::0x643::DG8A241801155::INSTR'): #visa_address='USB0::0x1AB1::0x643::DG8A241801155::INSTR'
+    _output_threshold = -90  # not sure, if 1 mVpp, should be -50
+
+    def __init__(
+        self, visa_address="USB0::0x1AB1::0x643::DG8A241801155::INSTR"
+    ):  # visa_address='USB0::0x1AB1::0x643::DG8A241801155::INSTR'
         self.visa_address = visa_address
-        
+
     def _write(self, string):
-        try: # if the connection is already open, this will work
+        try:  # if the connection is already open, this will work
             self.instr.write(string)
-        except Exception, e: # else we attempt to open the connection and try again
-            print 'Rigol822 write:', e
-            try: # silently ignore possible exceptions raised by del
+        except Exception as e:  # else we attempt to open the connection and try again
+            print(("Rigol822 write:", e))
+            try:  # silently ignore possible exceptions raised by del
                 del self.instr
             except Exception:
                 pass
             self.instr = visa.instrument(self.visa_address, delay=0.04)
             self.instr.write(string)
-        
+
     def _ask(self, s):
         try:
             val = self.instr.ask(s)
-        except Exception, e:
-            print 'Rigol1022 read:', e
+        except Exception as e:
+            print(("Rigol1022 read:", e))
             self.instr = visa.instrument(self.visa_address, delay=0.04)
             val = self.instr.ask(s)
         return val
 
-    #These 4 funcs seem will not be used except in command line
+    # These 4 funcs seem will not be used except in command line
     def On1(self):
-        self._write(':OUTP1 ON')
-        return self._ask(':OUTP1?')
-        
+        self._write(":OUTP1 ON")
+        return self._ask(":OUTP1?")
 
     def Off1(self):
-        self._write(':OUTP1 OFF')
-        return self._ask(':OUTP1?')
-    
+        self._write(":OUTP1 OFF")
+        return self._ask(":OUTP1?")
+
     def On2(self):
-        self._write(':OUTP2 ON')
-        return self._ask(':OUTP2?')
-        
+        self._write(":OUTP2 ON")
+        return self._ask(":OUTP2?")
 
     def Off2(self):
-        self._write(':OUTP2 OFF')
-        return self._ask(':OUTP2?')
+        self._write(":OUTP2 OFF")
+        return self._ask(":OUTP2?")
 
     def _voltToPower(self, u):
         """
         Converts p-p voltage to dBm assuming 50 Ohm load.
-        
+
         dBm = 20 log10( U / U_0 2**0.5 )
-        
+
         where U_0 = sqrt(50 * 10^-3) * 2**0.5  = 0.31622776601683794
         """
         return 20 * numpy.log10(u / 0.31622776601683794)
-        
+
     def _powerToVolt(self, p):
         """
         Converts power in dBm to p-p Volt assuming 50 Ohm load.
-        
+
         U = U_0 10^(dBm / 20)
         """
-        return .1 ** 0.5 * 10 ** (p / 20.)
+        return 0.1**0.5 * 10 ** (p / 20.0)
 
-    #why ".split(':')[1]" ? in rigol 1022
+    # why ".split(':')[1]" ? in rigol 1022
     def getPower1(self):
-        return self._voltToPower(float(self._ask(':SOUR1:VOLT?')))
+        return self._voltToPower(float(self._ask(":SOUR1:VOLT?")))
+
     def getPower2(self):
-        return self._voltToPower(float(self._ask(':SOUR2:VOLT?')))
+        return self._voltToPower(float(self._ask(":SOUR2:VOLT?")))
 
     def setPower1(self, power):
         if power is None or power < self._output_threshold:
-            self._write('OUTP1 OFF')
+            self._write("OUTP1 OFF")
             return
-        self._write(':SOUR1:VOLT %f' % self._powerToVolt(power))
-        self._write(':OUTP1 ON')
-    
+        self._write(":SOUR1:VOLT %f" % self._powerToVolt(power))
+        self._write(":OUTP1 ON")
+
     def setPower2(self, power):
         if power is None or power < self._output_threshold:
-            self._write(':OUTP2 OFF')
+            self._write(":OUTP2 OFF")
             return
-        self._write(':SOUR2:VOLT %f' % self._powerToVolt(power))
-        self._write(':OUTP2 ON')
+        self._write(":SOUR2:VOLT %f" % self._powerToVolt(power))
+        self._write(":OUTP2 ON")
 
-    #why ".split(':')[1]" ?
+    # why ".split(':')[1]" ?
     def getFrequency1(self):
-        return float(self._ask(':SOUR1:FREQ?'))
+        return float(self._ask(":SOUR1:FREQ?"))
+
     def getFrequency2(self):
-        return float(self._ask(':SOUR2:FREQ?'))
+        return float(self._ask(":SOUR2:FREQ?"))
 
     def setFrequency1(self, frequency):
-        self._write(':SOUR1:FREQ %e' % frequency)
+        self._write(":SOUR1:FREQ %e" % frequency)
+
     def setFrequency2(self, frequency):
-        self._write(':SOUR2:FREQ %e' % frequency)
+        self._write(":SOUR2:FREQ %e" % frequency)
 
     def setOutput(self, power, frequency):
         self.setPower1(power)
         self.setPower2(power)
         self.setFrequency1(frequency)
         self.setFrequency2(frequency)
-        self._write(':SOUR2:PHAS 90') #add a 90 phase shift to get y field
-        self._write(':SOUR1:FUNC SIN')
-        self._write(':SOUR2:FUNC SIN')
+        self._write(":SOUR2:PHAS 90")  # add a 90 phase shift to get y field
+        self._write(":SOUR1:FUNC SIN")
+        self._write(":SOUR2:FUNC SIN")

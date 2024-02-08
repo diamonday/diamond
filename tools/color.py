@@ -1,9 +1,9 @@
-from chaco.api import Spectral, jet
+from chaco.api import jet
 
 scheme = {
-'data 1':'red',
-'data 2':'blue',
-'background':'white',
-'fit 1':'green',
-'colormap':jet,
+    "data 1": "red",
+    "data 2": "blue",
+    "background": "white",
+    "fit 1": "green",
+    "colormap": jet,
 }
