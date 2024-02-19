@@ -1,20 +1,18 @@
-import time
+import logging
 import os
 import pickle
+import threading
+import time
+
+from chaco.api import PlotGraphicsContext
+from chaco.tools.better_zoom import BetterZoom
 
 # Enthought library imports
 from traits.api import HasPrivateTraits, Str, Tuple
-from traitsui.api import Handler, View, Item, OKButton, CancelButton
+from traitsui.api import CancelButton, Handler, Item, OKButton, View
 from traitsui.file_dialog import open_file, save_file
 
-from chaco.api import PlotGraphicsContext
-from chaco.tools.simple_zoom import SimpleZoom
-
-import logging
-
 from .data_toolbox import writeDictToFile
-
-import threading
 
 
 def timestamp():
@@ -339,7 +337,7 @@ class GetSetSaveImageHandler(GetSetItemsHandler):
             info.object.save_image(filename)
 
 
-class AspectZoomTool(SimpleZoom):
+class AspectZoomTool(BetterZoom):
 
     box = Tuple()
 

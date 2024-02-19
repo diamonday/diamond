@@ -8,11 +8,12 @@ BITFILE_24X4 = os.path.join(
     os.path.dirname(__file__), "PulseGenerator24x4.bit"
 )  # the FPGA bitfile is assumed to be located in the same directory as the present file
 
+import struct
 import time
 
-import ok
 import numpy as np
-import struct
+
+import ok
 
 
 class PulseGenerator:
@@ -305,7 +306,7 @@ class PulseGenerator:
             ticks = int(
                 round(time / dt)
             )  # convert the time into an integer multiple of hardware time steps
-            if ticks is 0:
+            if ticks == 0:
                 continue
             bits = self.createBitsFromChannels(channels)
             if (
