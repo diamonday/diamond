@@ -1,1 +1,4 @@
-black
+traits
+traitsui
+PyQt5
+chaco
